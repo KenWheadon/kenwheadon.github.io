@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Localization Project Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #f8fafc;
+      }
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: #f1f5f9;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+      }
+      .sync-indicator {
+        transition: opacity 0.3s ease;
+      }
+    </style>
+  </head>
+  <body class="p-4 md:p-8">
+    <div id="app" class="max-w-6xl mx-auto">
+      <!-- Header -->
+      <header
+        class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10"
+      >
+        <div>
+          <div class="flex items-center gap-3">
+            <h1 class="text-3xl font-bold text-slate-900">
+              Localization Tracker
+            </h1>
+            <div
+              id="syncStatus"
+              class="flex items-center gap-1.5 px-2 py-1 bg-slate-100 rounded-full text-[10px] font-bold uppercase tracking-wider text-slate-500 sync-indicator opacity-0"
+            >
+              <span
+                id="syncDot"
+                class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"
+              ></span>
+              <span id="syncText">Syncing...</span>
+            </div>
+          </div>
+          <p class="text-slate-500">
+            Master Project: Articulate Storyline Global Rollout
+          </p>
+        </div>
+        <div class="flex gap-2">
+          <button
+            onclick="toggleModal('teamModal')"
+            class="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 transition shadow-sm"
+          >
+            <i data-lucide="users" class="w-4 h-4 text-current"></i> Manage Team
+          </button>
+          <button
+            onclick="addLanguage()"
+            class="flex items-center gap-2 px-4 py-2 bg-blue-600 rounded-lg text-white hover:bg-blue-700 transition shadow-sm"
+          >
+            <i data-lucide="plus" class="w-4 h-4 text-current"></i> Add Language
+          </button>
+        </div>
+      </header>
+
+      <!-- Stats Overview -->
+      <div
+        id="projectStats"
+        class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10"
+      ></div>
+
+      <!-- Language Grid -->
+      <div
+        id="languageGrid"
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+      >
+        <div
+          class="col-span-full py-20 text-center text-slate-400 bg-white border border-slate-200 rounded-3xl shadow-sm"
+        >
+          <div
+            class="animate-spin inline-block w-8 h-8 border-4 border-slate-200 border-t-blue-500 rounded-full mb-4"
+          ></div>
+          <p id="loadingMsg">Connecting to Shared Database...</p>
+        </div>
+      </div>
+
+      <!-- Detail Modal -->
+      <div
+        id="detailModal"
+        class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4"
+      >
+        <div
+          class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl max-h-[90vh] flex flex-col"
+        >
+          <div
+            class="p-6 border-b border-slate-100 flex justify-between items-center"
+          >
+            <div id="modalHeader">
+              <h2 class="text-2xl font-bold text-slate-800">Language Detail</h2>
+            </div>
+            <button
+              onclick="toggleModal('detailModal')"
+              class="p-2 hover:bg-slate-100 rounded-full"
+            >
+              <i
+                data-lucide="x"
+                class="w-6 h-6 text-slate-400 text-current"
+              ></i>
+            </button>
+          </div>
+          <div
+            id="stepList"
+            class="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-4"
+          ></div>
+          <div
+            class="p-4 border-t border-slate-100 bg-slate-50 flex justify-end"
+          >
+            <button
+              onclick="deleteLanguage()"
+              class="text-red-500 hover:text-red-700 text-sm font-medium flex items-center gap-1"
+            >
+              <i data-lucide="trash-2" class="w-4 h-4 text-current"></i> Delete
+              Language
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Team Management Modal -->
+      <div
+        id="teamModal"
+        class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4"
+      >
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold text-slate-800">Team Members</h2>
+            <button
+              onclick="toggleModal('teamModal')"
+              class="p-2 hover:bg-slate-100 rounded-full"
+            >
+              <i data-lucide="x" class="w-5 h-5 text-current"></i>
+            </button>
+          </div>
+          <div class="flex gap-2 mb-6">
+            <input
+              type="text"
+              id="newMemberInput"
+              placeholder="Enter name..."
+              class="flex-1 px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <button
+              onclick="addMember()"
+              class="bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-800"
+            >
+              Add
+            </button>
+          </div>
+          <div
+            id="teamList"
+            class="space-y-2 max-h-60 overflow-y-auto custom-scrollbar"
+          ></div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+      import {
+        getAuth,
+        signInAnonymously,
+        onAuthStateChanged,
+      } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+      import {
+        getFirestore,
+        doc,
+        setDoc,
+        collection,
+        onSnapshot,
+        updateDoc,
+        deleteDoc,
+        addDoc,
+      } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+      // Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyDQL5CAh-jO173WtTTut46JPi9-rZMtssE",
+        authDomain: "localization-tracker-58afb.firebaseapp.com",
+        projectId: "localization-tracker-58afb",
+        storageBucket: "localization-tracker-58afb.firebasestorage.app",
+        messagingSenderId: "812531320388",
+        appId: "1:812531320388:web:a9778c11d8f046edf65e11",
+      };
+
+      const LOCAL_STORAGE_KEY = "localization_tracker_backup";
+      let isCloudEnabled = false;
+      let db, auth;
+
+      // State
+      let teamMembers = [
+        "Alex Rivera",
+        "Sarah Chen",
+        "Marco Rossi",
+        "Unassigned",
+      ];
+      let languages = [];
+      let activeLanguageId = null;
+
+      const workflowSteps = [
+        {
+          id: 1,
+          title: "Finalize Master",
+          desc: "Lock original file",
+          icon: "lock",
+        },
+        {
+          id: 2,
+          title: "Create HUB",
+          desc: "Duplicate as HUB.story",
+          icon: "copy",
+        },
+        {
+          id: 3,
+          title: "Run AI Translation",
+          desc: "Articulate AI feature",
+          icon: "sparkles",
+        },
+        {
+          id: 4,
+          title: "Isolate Language",
+          desc: "Save language copy",
+          icon: "languages",
+        },
+        {
+          id: 5,
+          title: "Word Export",
+          desc: "Generate translation doc",
+          icon: "file-text",
+        },
+        {
+          id: 6,
+          title: "Fresh Master Copy",
+          desc: "Clean master duplicate",
+          icon: "file-plus-2",
+        },
+        {
+          id: 7,
+          title: "Import Word",
+          desc: "Re-import translated text",
+          icon: "import",
+        },
+        {
+          id: 8,
+          title: "Audio Integration",
+          desc: "ElevenLabs generation",
+          icon: "mic",
+        },
+        {
+          id: 9,
+          title: "QA & Audit",
+          desc: "Final verification",
+          icon: "check-circle-2",
+        },
+      ];
+
+      function showSyncing(text = "Syncing...") {
+        const el = document.getElementById("syncStatus");
+        const txt = document.getElementById("syncText");
+        if (!el || !txt) return;
+        txt.innerText = text;
+        el.classList.replace("opacity-0", "opacity-100");
+        setTimeout(
+          () => el.classList.replace("opacity-100", "opacity-0"),
+          2000,
+        );
+      }
+
+      // Fallback Persistence Logic
+      function loadLocalData() {
+        const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (saved) {
+          const data = JSON.parse(saved);
+          teamMembers = data.teamMembers || teamMembers;
+          languages = data.languages || [];
+        }
+        renderAll();
+      }
+
+      function saveLocalData() {
+        if (isCloudEnabled) return;
+        localStorage.setItem(
+          LOCAL_STORAGE_KEY,
+          JSON.stringify({ teamMembers, languages }),
+        );
+        showSyncing("Saved to Browser");
+      }
+
+      async function init() {
+        try {
+          const app = initializeApp(firebaseConfig);
+          auth = getAuth(app);
+          db = getFirestore(app);
+
+          await signInAnonymously(auth);
+
+          onAuthStateChanged(auth, (user) => {
+            if (user) {
+              isCloudEnabled = true;
+              document
+                .getElementById("syncStatus")
+                .classList.remove("opacity-0");
+              document.getElementById("syncText").innerText = "Connected";
+
+              // Sync Team
+              const teamDoc = doc(db, "team", "members");
+              onSnapshot(teamDoc, (snap) => {
+                if (snap.exists()) {
+                  teamMembers = snap.data().list;
+                  renderTeamList();
+                  if (activeLanguageId) renderSteps();
+                } else {
+                  setDoc(teamDoc, { list: teamMembers });
+                }
+              });
+
+              // Sync Languages
+              const langCol = collection(db, "languages");
+              onSnapshot(
+                langCol,
+                (snap) => {
+                  languages = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+                  renderAll();
+                },
+                (err) => {
+                  console.warn("Firestore error, falling back to local:", err);
+                  switchToLocalMode();
+                },
+              );
+            }
+          });
+        } catch (err) {
+          console.warn(
+            "Firebase failed (likely file:// origin or disabled Auth). Falling back to Local Mode.",
+          );
+          switchToLocalMode();
+        }
+        lucide.createIcons();
+      }
+
+      function switchToLocalMode() {
+        isCloudEnabled = false;
+        document.getElementById("syncStatus").classList.remove("opacity-0");
+        document.getElementById("syncText").innerText = "Local Mode";
+        document.getElementById("syncDot").classList.remove("bg-emerald-500");
+        document.getElementById("syncDot").classList.add("bg-amber-500");
+        loadLocalData();
+      }
+
+      // Action Handlers
+      window.addLanguage = async () => {
+        const name = prompt("Language Name:");
+        if (!name) return;
+        const newLang = {
+          name,
+          steps: workflowSteps.map((s) => ({
+            ...s,
+            completed: false,
+            assignedTo: "Unassigned",
+          })),
+        };
+
+        if (isCloudEnabled) {
+          showSyncing();
+          await addDoc(collection(db, "languages"), newLang);
+        } else {
+          newLang.id = "local-" + Date.now();
+          languages.push(newLang);
+          saveLocalData();
+          renderAll();
+        }
+      };
+
+      window.toggleStep = async (idx) => {
+        const lang = languages.find((l) => l.id === activeLanguageId);
+        if (!lang) return;
+        const newSteps = [...lang.steps];
+        newSteps[idx].completed = !newSteps[idx].completed;
+
+        if (isCloudEnabled) {
+          showSyncing();
+          await updateDoc(doc(db, "languages", activeLanguageId), {
+            steps: newSteps,
+          });
+        } else {
+          lang.steps = newSteps;
+          saveLocalData();
+          renderAll();
+        }
+      };
+
+      window.assignUser = async (idx, name) => {
+        const lang = languages.find((l) => l.id === activeLanguageId);
+        if (!lang) return;
+        const newSteps = [...lang.steps];
+        newSteps[idx].assignedTo = name;
+
+        if (isCloudEnabled) {
+          showSyncing();
+          await updateDoc(doc(db, "languages", activeLanguageId), {
+            steps: newSteps,
+          });
+        } else {
+          lang.steps = newSteps;
+          saveLocalData();
+        }
+      };
+
+      window.addMember = async () => {
+        const input = document.getElementById("newMemberInput");
+        if (!input.value.trim()) return;
+        const newList = [...new Set([input.value.trim(), ...teamMembers])];
+
+        if (isCloudEnabled) {
+          showSyncing();
+          await setDoc(doc(db, "team", "members"), { list: newList });
+        } else {
+          teamMembers = newList;
+          saveLocalData();
+          renderTeamList();
+        }
+        input.value = "";
+      };
+
+      window.deleteLanguage = async () => {
+        if (!confirm("Delete this language tracker?")) return;
+
+        if (isCloudEnabled) {
+          showSyncing();
+          await deleteDoc(doc(db, "languages", activeLanguageId));
+        } else {
+          languages = languages.filter((l) => l.id !== activeLanguageId);
+          saveLocalData();
+          renderAll();
+        }
+        window.toggleModal("detailModal");
+      };
+
+      // UI Helpers
+      window.toggleModal = (id) =>
+        document.getElementById(id).classList.toggle("hidden");
+      window.openLanguageDetail = (id) => {
+        activeLanguageId = id;
+        const lang = languages.find((l) => l.id === id);
+        if (!lang) return;
+        document.getElementById("modalHeader").innerHTML =
+          `<h2 class="text-2xl font-bold">${lang.name}</h2>`;
+        renderSteps();
+        toggleModal("detailModal");
+      };
+
+      function renderAll() {
+        renderLanguageGrid();
+        renderStats();
+        renderTeamList();
+        if (activeLanguageId) renderSteps();
+      }
+
+      function renderTeamList() {
+        document.getElementById("teamList").innerHTML = teamMembers
+          .map(
+            (m) => `
+                <div class="p-3 bg-slate-50 rounded-lg border border-slate-100 text-sm font-medium">${m}</div>
+            `,
+          )
+          .join("");
+      }
+
+      function renderStats() {
+        const total = languages.length;
+        const done = languages.filter((l) =>
+          l.steps.every((s) => s.completed),
+        ).length;
+        document.getElementById("projectStats").innerHTML = `
+                <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm"><p class="text-xs text-slate-500 font-bold uppercase">Total Languages</p><p class="text-3xl font-bold">${total}</p></div>
+                <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm"><p class="text-xs text-slate-500 font-bold uppercase">In Progress</p><p class="text-3xl font-bold text-blue-600">${total - done}</p></div>
+                <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm"><p class="text-xs text-slate-500 font-bold uppercase">Completed</p><p class="text-3xl font-bold text-emerald-600">${done}</p></div>
+            `;
+      }
+
+      function renderLanguageGrid() {
+        const grid = document.getElementById("languageGrid");
+        if (languages.length === 0) {
+          grid.innerHTML = `<div class="col-span-full py-20 text-center text-slate-400">No languages tracked yet. Click "Add Language" to start.</div>`;
+          return;
+        }
+        grid.innerHTML = languages
+          .map((lang) => {
+            const comp = lang.steps.filter((s) => s.completed).length;
+            const perc = Math.round((comp / 9) * 100);
+            const current =
+              lang.steps.find((s) => !s.completed)?.title || "Completed";
+            return `
+                    <div onclick="openLanguageDetail('${lang.id}')" class="bg-white p-6 rounded-2xl border border-slate-200 hover:border-blue-400 cursor-pointer transition-all shadow-sm hover:shadow-md">
+                        <div class="flex justify-between items-center mb-4"><h3 class="font-bold text-lg text-slate-800">${lang.name}</h3><span class="text-xs font-black text-blue-500">${perc}%</span></div>
+                        <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mb-4"><div class="h-full bg-blue-500 transition-all duration-500" style="width:${perc}%"></div></div>
+                        <p class="text-xs text-slate-400 font-medium">Phase: <span class="text-slate-700">${current}</span></p>
+                    </div>
+                `;
+          })
+          .join("");
+        lucide.createIcons();
+      }
+
+      function renderSteps() {
+        const lang = languages.find((l) => l.id === activeLanguageId);
+        if (!lang) return;
+        document.getElementById("stepList").innerHTML = lang.steps
+          .map(
+            (step, i) => `
+                <div class="flex items-center gap-4 p-4 rounded-xl border ${step.completed ? "bg-emerald-50 border-emerald-100" : "bg-white border-slate-100"} transition-colors">
+                    <button onclick="toggleStep(${i})" class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${step.completed ? "bg-emerald-500 border-emerald-500 text-white" : "border-slate-300"}">
+                        <i data-lucide="check" class="w-4 h-4 text-current"></i>
+                    </button>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-bold text-sm truncate ${step.completed ? "line-through opacity-40 text-emerald-900" : "text-slate-800"}">${step.id}. ${step.title}</p>
+                        <p class="text-[10px] text-slate-400">${step.desc}</p>
+                    </div>
+                    <select onchange="assignUser(${i}, this.value)" onclick="event.stopPropagation()" class="text-[10px] border border-slate-200 rounded p-1 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        ${teamMembers.map((m) => `<option value="${m}" ${step.assignedTo === m ? "selected" : ""}>${m}</option>`).join("")}
+                    </select>
+                </div>
+            `,
+          )
+          .join("");
+        lucide.createIcons();
+      }
+
+      init();
+    </script>
+  </body>
+</html>

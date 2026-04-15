@@ -25,6 +25,9 @@
       .sync-indicator {
         transition: opacity 0.3s ease;
       }
+      summary::-webkit-details-marker {
+        display: none;
+      }
     </style>
   </head>
   <body class="p-4 md:p-8">
@@ -528,24 +531,55 @@
       function renderSteps() {
         const lang = languages.find((l) => l.id === activeLanguageId);
         if (!lang) return;
-        document.getElementById("stepList").innerHTML = lang.steps
-          .map(
-            (step, i) => `
-                <div class="flex items-center gap-4 p-4 rounded-xl border ${step.completed ? "bg-emerald-50 border-emerald-100" : "bg-white border-slate-100"} transition-colors">
-                    <button onclick="toggleStep(${i})" class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${step.completed ? "bg-emerald-500 border-emerald-500 text-white" : "border-slate-300"}">
-                        <i data-lucide="check" class="w-4 h-4 text-current"></i>
-                    </button>
-                    <div class="flex-1 min-w-0">
-                        <p class="font-bold text-sm truncate ${step.completed ? "line-through opacity-40 text-emerald-900" : "text-slate-800"}">${step.id}. ${step.title}</p>
-                        <p class="text-[10px] text-slate-400">${step.desc}</p>
-                    </div>
-                    <select onchange="assignUser(${i}, this.value)" onclick="event.stopPropagation()" class="text-[10px] border border-slate-200 rounded p-1 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
-                        ${teamMembers.map((m) => `<option value="${m}" ${step.assignedTo === m ? "selected" : ""}>${m}</option>`).join("")}
-                    </select>
+
+        const completed = [];
+        const active = [];
+        lang.steps.forEach((step, i) => {
+          if (step.completed) completed.push({ ...step, originalIndex: i });
+          else active.push({ ...step, originalIndex: i });
+        });
+
+        const renderRow = (step, i, isCompact) => `
+            <div class="flex items-center gap-4 ${isCompact ? "py-2 px-3 opacity-60" : "p-4"} rounded-xl border ${step.completed ? "bg-emerald-50 border-emerald-100" : "bg-white border-slate-100"} transition-colors">
+                <button onclick="toggleStep(${i})" class="${isCompact ? "w-5 h-5" : "w-6 h-6"} rounded-full border-2 flex items-center justify-center transition-all ${step.completed ? "bg-emerald-500 border-emerald-500 text-white" : "border-slate-300"}">
+                    <i data-lucide="check" class="${isCompact ? "w-3 h-3" : "w-4 h-4"} text-current"></i>
+                </button>
+                <div class="flex-1 min-w-0">
+                    <p class="font-bold text-sm truncate ${step.completed ? "line-through text-emerald-900" : "text-slate-800"}">${step.id}. ${step.title}</p>
+                    ${!isCompact ? `<p class="text-[10px] text-slate-400">${step.desc}</p>` : ""}
                 </div>
-            `,
-          )
-          .join("");
+                ${
+                  !isCompact
+                    ? `
+                <select onchange="assignUser(${i}, this.value)" onclick="event.stopPropagation()" class="text-[10px] border border-slate-200 rounded p-1 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    ${teamMembers.map((m) => `<option value="${m}" ${step.assignedTo === m ? "selected" : ""}>${m}</option>`).join("")}
+                </select>
+                `
+                    : `<span class="text-[10px] text-slate-400 font-medium">${step.assignedTo}</span>`
+                }
+            </div>
+        `;
+
+        let html = "";
+        if (completed.length > 0) {
+          html += `
+            <details class="group mb-4">
+                <summary class="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-100 transition-colors list-none">
+                    <div class="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                        <i data-lucide="chevron-right" class="w-3 h-3 group-open:rotate-90 transition-transform"></i>
+                        ${completed.length} Completed Tasks
+                    </div>
+                </summary>
+                <div class="mt-2 space-y-2 pl-2">
+                    ${completed.map((s) => renderRow(s, s.originalIndex, true)).join("")}
+                </div>
+            </details>
+          `;
+        }
+
+        html += active.map((s) => renderRow(s, s.originalIndex, false)).join("");
+
+        document.getElementById("stepList").innerHTML = html;
         lucide.createIcons();
       }
 

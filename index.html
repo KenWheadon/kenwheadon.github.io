@@ -417,6 +417,7 @@
         } else {
           lang.steps = newSteps;
           saveLocalData();
+          renderAll();
         }
       };
 
@@ -472,11 +473,19 @@
 
       function renderTeamList() {
         document.getElementById("teamList").innerHTML = teamMembers
-          .map(
-            (m) => `
-                <div class="p-3 bg-slate-50 rounded-lg border border-slate-100 text-sm font-medium">${m}</div>
-            `,
-          )
+          .map((m) => {
+            const taskCount = languages.reduce((acc, lang) => {
+              return (
+                acc + (lang.steps || []).filter((s) => s.assignedTo === m).length
+              );
+            }, 0);
+            return `
+                <div class="p-3 bg-slate-50 rounded-lg border border-slate-100 flex justify-between items-center">
+                  <span class="text-sm font-medium text-slate-700">${m}</span>
+                  <span class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full">${taskCount} tasks</span>
+                </div>
+            `;
+          })
           .join("");
       }
 

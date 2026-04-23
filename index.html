@@ -265,6 +265,24 @@
         },
         {
           id: 9,
+          title: "Text Review",
+          desc: "Refine translated copy",
+          icon: "file-check",
+        },
+        {
+          id: 10,
+          title: "Accessibility Review",
+          desc: "Ensure compliance",
+          icon: "accessibility",
+        },
+        {
+          id: 11,
+          title: "Create Updated Graphics",
+          desc: "Localize visual assets",
+          icon: "image",
+        },
+        {
+          id: 12,
           title: "QA & Audit",
           desc: "Final verification",
           icon: "check-circle-2",
@@ -495,7 +513,7 @@
       function renderStats() {
         const total = languages.length;
         const done = languages.filter((l) =>
-          l.steps.every((s) => s.completed),
+            (l.steps || []).every((s) => s.completed),
         ).length;
         document.getElementById("projectStats").innerHTML = `
                 <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm"><p class="text-xs text-slate-500 font-bold uppercase">Total Languages</p><p class="text-3xl font-bold">${total}</p></div>
@@ -513,7 +531,7 @@
         grid.innerHTML = languages
           .map((lang) => {
             const comp = lang.steps.filter((s) => s.completed).length;
-            const perc = Math.round((comp / 9) * 100);
+            const perc = Math.round((comp / lang.steps.length) * 100);
             const current =
               lang.steps.find((s) => !s.completed)?.title || "Completed";
             return `

@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debt Dealer: Evolving Blackjack</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0a0a0c;
+            --surface-color: #16161a;
+            --accent-gold: #f1c40f;
+            --accent-red: #ff4757;
+            --accent-cyan: #00d2ff;
+            --text-main: #f1f2f6;
+            --text-muted: #a4b0be;
+            --card-front: #ffffff;
+            --card-back: linear-gradient(135deg, #1e3799 0%, #0c2461 100%);
+            --shadow-glow: 0 0 20px rgba(241, 196, 15, 0.2);
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Outfit', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(0, 210, 255, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 50% 100%, rgba(255, 71, 87, 0.05) 0%, transparent 50%);
+        }
+
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        #game-container {
+            width: 95%;
+            max-width: 900px;
+            text-align: center;
+            padding: 40px 20px;
+            z-index: 1;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            letter-spacing: 0.5rem;
+            margin-bottom: 30px;
+            background: linear-gradient(to bottom, #fff, #a4b0be);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 0.1rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-gold);
+        }
+
+        .game-area {
+            background: rgba(22, 22, 26, 0.8);
+            border-radius: 24px;
+            padding: 40px;
+            min-height: 500px;
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+
+        /* Card 3D Styling */
+        .hand {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 30px 0;
+            min-height: 140px;
+            perspective: 1000px;
+        }
+
+        .card-container {
+            width: 80px;
+            height: 120px;
+            position: relative;
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-style: preserve-3d;
+        }
+
+        .card-container.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-container.suspense {
+            animation: suspenseWobble 1.5s ease-in-out infinite;
+        }
+
+        @keyframes suspenseWobble {
+            0% { transform: rotateY(-20deg) rotateZ(-2deg); }
+            50% { transform: rotateY(-40deg) rotateZ(2deg); }
+            100% { transform: rotateY(-20deg) rotateZ(-2deg); }
+        }
+
+        @keyframes wildReveal {
+            0% { transform: scale(0) rotateY(0) translateY(100px); opacity: 0; }
+            60% { transform: scale(1.2) rotateY(190deg) translateY(-20px); opacity: 1; }
+            100% { transform: scale(1) rotateY(180deg) translateY(0); opacity: 1; }
+        }
+
+        .card-container.wild-flip {
+            animation: wildReveal 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.4rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .card-front {
+            background: var(--card-front);
+            color: #1a1a1a;
+            transform: rotateY(180deg) translateZ(2px);
+            z-index: 2;
+        }
+
+        .card-back {
+            background: var(--card-back);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            transform: rotateY(0deg) translateZ(1px);
+            z-index: 1;
+        }
+
+        .card-back::after {
+            content: 'DD';
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.1);
+        }
+
+        .card-suit {
+            font-size: 1.8rem;
+        }
+
+        /* Controls */
+        .controls {
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            opacity: 1;
+            transition: opacity 0.3s;
+        }
+
+        button {
+            padding: 12px 28px;
+            font-size: 1rem;
+            cursor: pointer;
+            background: var(--accent-gold);
+            color: #000;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            letter-spacing: 0.05rem;
+            box-shadow: 0 4px 15px rgba(241, 196, 15, 0.3);
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(241, 196, 15, 0.4);
+            filter: brightness(1.1);
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #2f3542;
+            color: #57606f;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px;
+            width: 100px;
+            font-size: 1.2rem;
+            border-radius: 12px;
+            color: var(--accent-gold);
+            text-align: center;
+            font-weight: 700;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            border-color: var(--accent-gold);
+        }
+
+        #message {
+            font-size: 1.8rem;
+            margin: 25px 0;
+            min-height: 40px;
+            font-weight: 700;
+            color: var(--text-main);
+            text-shadow: 0 0 10px rgba(255,255,255,0.2);
+        }
+
+        .hidden-screen {
+            display: none !important;
+        }
+
+        /* Selection Phase */
+        .selection-grid {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .pick-card-btn {
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .pick-card-btn:hover {
+            transform: translateY(-15px) scale(1.05);
+            filter: drop-shadow(0 0 20px var(--accent-cyan));
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-fade {
+            animation: fadeIn 0.5s ease forwards;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="particle-canvas"></canvas>
+
+    <div id="game-container">
+        <h1>DEBT DEALER</h1>
+
+        <div class="stats-bar">
+            <div class="stat-item">
+                <span class="stat-label">Day</span>
+                <span class="stat-value" id="day">1</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Money</span>
+                <span class="stat-value" id="balance">100</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Debt Due</span>
+                <span class="stat-value" id="debt" style="color: var(--accent-red)">50</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Target</span>
+                <span class="stat-value" id="target" style="color: var(--accent-cyan)">21</span>
+            </div>
+        </div>
+
+        <div class="game-area">
+            <!-- Phase 1: Card Selection -->
+            <div id="phase-selection" class="animate-fade">
+                <h2>EVOLVE THE TARGET</h2>
+                <p style="color: var(--text-muted)">The dealer is raising the stakes. Pick a card to modify today's Target Score.</p>
+                <div class="selection-grid">
+                    <div class="card-container pick-card-btn" onclick="selectDailyCard(0)">
+                        <div class="card-face card-back"></div>
+                    </div>
+                    <div class="card-container pick-card-btn" onclick="selectDailyCard(1)">
+                        <div class="card-face card-back"></div>
+                    </div>
+                    <div class="card-container pick-card-btn" onclick="selectDailyCard(2)">
+                        <div class="card-face card-back"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phase 2: Blackjack Table -->
+            <div id="phase-table" class="hidden-screen animate-fade">
+                <div id="message">PLACE YOUR BET</div>
+
+                <div style="color: var(--text-muted); font-size: 0.8rem; letter-spacing: 0.2rem;">DEALER: <span id="dealer-score" style="color: var(--text-main)"></span></div>
+                <div class="hand" id="dealer-hand"></div>
+
+                <div style="margin: 20px 0; color: var(--accent-red); font-weight: bold; opacity: 0.5;">VS</div>
+
+                <div style="color: var(--text-muted); font-size: 0.8rem; letter-spacing: 0.2rem;">PLAYER: <span id="player-score" style="color: var(--text-main)"></span></div>
+                <div class="hand" id="player-hand"></div>
+
+                <div class="controls" id="bet-controls">
+                    <input type="number" id="bet-amount" value="10">
+                    <button onclick="startRound()">Deal Hand</button>
+                </div>
+
+                <div class="controls hidden-screen" id="play-controls">
+                    <button onclick="hit()">Hit</button>
+                    <button onclick="stand()" style="background: var(--surface-color); color: var(--text-main); border: 1px solid var(--accent-gold)">Stand</button>
+                </div>
+            </div>
+
+            <!-- Phase 3: End of Day -->
+            <div id="phase-endday" class="hidden-screen animate-fade">
+                <h2 style="color: var(--accent-red)">NIGHTFALL</h2>
+                <p id="debt-msg" style="font-size: 1.2rem; margin-bottom: 30px;"></p>
+                <button onclick="startNextDay()">Pay Debt & Wake Up</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- UTILS & JUICE ---
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.size = Math.random() * 5 + 2;
+                this.speedX = Math.random() * 6 - 3;
+                this.speedY = Math.random() * 6 - 3;
+                this.life = 1;
+                this.decay = Math.random() * 0.02 + 0.01;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.life -= this.decay;
+            }
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = this.life;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function spawnParticles(x, y, color, count = 20) {
+            for (let i = 0; i < count; i++) {
+                particles.push(new Particle(x, y, color));
+            }
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+                if (particles[i].life <= 0) {
+                    particles.splice(i, 1);
+                    i--;
+                }
+            }
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+        function shake(elementId = 'game-container', intensity = 5) {
+            const el = document.getElementById(elementId);
+            const originalTransform = el.style.transform;
+            let count = 0;
+            const interval = setInterval(() => {
+                const x = (Math.random() - 0.5) * intensity;
+                const y = (Math.random() - 0.5) * intensity;
+                el.style.transform = `translate(${x}px, ${y}px)`;
+                count++;
+                if (count > 10) {
+                    clearInterval(interval);
+                    el.style.transform = originalTransform;
+                }
+            }, 30);
+        }
+
+        function animateValue(id, start, end, duration = 1000) {
+            const obj = document.getElementById(id);
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const val = Math.floor(progress * (end - start) + start);
+                obj.innerHTML = id === 'balance' || id === 'debt' ? val : val;
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        // --- GAME STATE ---
+        let state = {
+            day: 1,
+            balance: 100,
+            dailyDebt: 50,
+            targetScore: 21,
+            deckMax: 10,
+            currentBet: 0,
+            playerHand: [],
+            dealerHand: [],
+            deck: [],
+            gameOver: false
+        };
+
+        function updateUI(animate = false) {
+            if (animate) {
+                // We'd need old values to animate from, but for now just update
+                document.getElementById('day').innerText = state.day;
+                document.getElementById('balance').innerText = state.balance;
+                document.getElementById('debt').innerText = state.dailyDebt;
+                document.getElementById('target').innerText = state.targetScore;
+            } else {
+                document.getElementById('day').innerText = state.day;
+                document.getElementById('balance').innerText = state.balance;
+                document.getElementById('debt').innerText = state.dailyDebt;
+                document.getElementById('target').innerText = state.targetScore;
+            }
+        }
+
+        // --- PHASE 1: DAILY SELECTION ---
+        let dailyOptions = [];
+        function initSelection() {
+            if (state.day === 1) {
+                state.targetScore = 21;
+                updateUI();
+                showScreen('phase-table');
+                document.getElementById('message').innerText = "PLACE YOUR BET";
+                return;
+            }
+            dailyOptions = [
+                Math.floor(Math.random() * 6) + 1,
+                Math.floor(Math.random() * 6) + 1,
+                Math.floor(Math.random() * 6) + 1
+            ];
+            showScreen('phase-selection');
+        }
+
+        function selectDailyCard(index) {
+            const val = dailyOptions[index];
+            const oldTarget = state.targetScore;
+            state.targetScore = 21 + val;
+            
+            // Flip the card visually
+            const cards = document.querySelectorAll('.pick-card-btn');
+            const card = cards[index];
+            card.innerHTML = `
+                <div class="card-face card-front" style="color: var(--accent-cyan)">
+                    <span class="card-suit">?</span>
+                    <span>${val}</span>
+                </div>
+                <div class="card-face card-back"></div>
+            `;
+            card.classList.add('flipped');
+
+            spawnParticles(window.innerWidth/2, window.innerHeight/2, '#00d2ff', 40);
+            document.getElementById('message').innerText = `STAKES RAISED: +${val}`;
+            animateValue('target', oldTarget, state.targetScore, 1000);
+
+            setTimeout(() => {
+                showScreen('phase-table');
+                document.getElementById('message').innerText = "PLACE YOUR BET";
+            }, 2000);
+        }
+
+        // --- PHASE 2: BLACKJACK LOGIC ---
+        function createDeck() {
+            const deck = [];
+            const suits = ['♠', '♣', '♥', '♦'];
+            const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+
+            let extraCards = [];
+            if (state.day > 4) {
+                const extraCount = state.day - 4;
+                for (let i = 11; i <= 10 + extraCount; i++) {
+                    extraCards.push(i.toString());
+                }
+            }
+
+            for (let suit of suits) {
+                for (let rank of ranks) deck.push({ rank, suit });
+                for (let rank of extraCards) deck.push({ rank, suit });
+            }
+            return deck.sort(() => Math.random() - 0.5);
+        }
+
+        function getCardValue(card) {
+            const val = card.rank;
+            if (val === 'A') return 11;
+            if (['J', 'Q', 'K'].includes(val)) return 10;
+            return parseInt(val);
+        }
+
+        function calculateScore(hand) {
+            let score = 0;
+            let aces = 0;
+            for (let card of hand) {
+                let v = getCardValue(card);
+                if (v === 11) aces++;
+                score += v;
+            }
+            while (score > state.targetScore && aces > 0) {
+                score -= 10;
+                aces--;
+            }
+            return score;
+        }
+
+        function renderHand(hand, elementId, hideFirst = false) {
+            const el = document.getElementById(elementId);
+            const currentCards = el.querySelectorAll('.card-container');
+            
+            hand.forEach((card, i) => {
+                // Only create if it doesn't exist
+                if (i >= currentCards.length) {
+                    const container = document.createElement('div');
+                    container.className = 'card-container';
+                    
+                    const isRed = ['♥', '♦'].includes(card.suit);
+                    const color = isRed ? 'var(--accent-red)' : '#1a1a1a';
+
+                    container.innerHTML = `
+                        <div class="card-face card-back"></div>
+                        <div class="card-face card-front" style="color: ${color}">
+                            <span>${card.rank}</span>
+                            <span class="card-suit">${card.suit}</span>
+                        </div>
+                    `;
+
+                    el.appendChild(container);
+
+                    // If it's the dealer's hidden card, don't flip yet
+                    if (i === 0 && hideFirst) {
+                        // Stay hidden
+                    } else {
+                        // Wild reveal for new cards
+                        container.classList.add('wild-flip');
+                    }
+                }
+            });
+        }
+
+        function startRound() {
+            const betInput = document.getElementById('bet-amount');
+            const bet = parseInt(betInput.value);
+
+            if (bet > state.balance || bet <= 0) {
+                shake('bet-controls', 10);
+                return;
+            }
+
+            state.currentBet = bet;
+            state.deck = createDeck();
+            state.playerHand = [state.deck.pop(), state.deck.pop()];
+            state.dealerHand = [state.deck.pop(), state.deck.pop()];
+
+            document.getElementById('bet-controls').classList.add('hidden-screen');
+            document.getElementById('play-controls').classList.remove('hidden-screen');
+
+            // Clear hands before rendering
+            document.getElementById('player-hand').innerHTML = '';
+            document.getElementById('dealer-hand').innerHTML = '';
+
+            renderHand(state.playerHand, 'player-hand');
+            renderHand(state.dealerHand, 'dealer-hand', true);
+            
+            const pScore = calculateScore(state.playerHand);
+            document.getElementById('player-score').innerText = pScore;
+            // For dealer, only show the visible card's value initially
+            document.getElementById('dealer-score').innerText = getCardValue(state.dealerHand[1]);
+            document.getElementById('message').innerText = `SCORE: ${pScore}`;
+        }
+
+        function hit() {
+            state.playerHand.push(state.deck.pop());
+            renderHand(state.playerHand, 'player-hand');
+            const score = calculateScore(state.playerHand);
+            
+            setTimeout(() => {
+                document.getElementById('player-score').innerText = score;
+                document.getElementById('message').innerText = `SCORE: ${score}`;
+                if (score > state.targetScore) {
+                    endRound("BUSTED");
+                }
+            }, 500);
+        }
+
+        function stand() {
+            const dealerEl = document.getElementById('dealer-hand');
+            const firstCard = dealerEl.querySelector('.card-container');
+            
+            if (firstCard) {
+                // Suspense Reveal
+                firstCard.classList.add('suspense');
+                document.getElementById('message').innerText = "WHAT'S THE DEALER GOT?";
+                
+                setTimeout(() => {
+                    firstCard.classList.remove('suspense');
+                    firstCard.classList.add('flipped');
+                    
+                    const resolveDealer = () => {
+                        const score = calculateScore(state.dealerHand);
+                        document.getElementById('dealer-score').innerText = score;
+                        if (score < state.targetScore - 4) {
+                            state.dealerHand.push(state.deck.pop());
+                            renderHand(state.dealerHand, 'dealer-hand');
+                            setTimeout(resolveDealer, 1000); // Slower hits for suspense
+                        } else {
+                            const pScore = calculateScore(state.playerHand);
+                            const dScore = calculateScore(state.dealerHand);
+
+                            if (dScore > state.targetScore) {
+                                endRound("DEALER BUSTS");
+                            } else if (pScore > dScore) {
+                                endRound("YOU WIN");
+                            } else if (pScore < dScore) {
+                                endRound("DEALER WINS");
+                            } else {
+                                endRound("PUSH");
+                            }
+                        }
+                    };
+                    setTimeout(resolveDealer, 800);
+                }, 1500); // 1.5s of suspense
+            }
+        }
+
+        function endRound(msg) {
+            document.getElementById('message').innerText = msg;
+            document.getElementById('play-controls').classList.add('hidden-screen');
+
+            const oldBalance = state.balance;
+            if (msg.includes("WIN") || msg.includes("BUSTS")) {
+                state.balance += state.currentBet;
+                spawnParticles(window.innerWidth/2, window.innerHeight/2, 'var(--accent-gold)', 50);
+            } else if (msg.includes("PUSH")) {
+                // No change
+            } else {
+                state.balance -= state.currentBet;
+                shake('game-area', 15);
+                spawnParticles(window.innerWidth/2, window.innerHeight/2, 'var(--accent-red)', 30);
+            }
+
+            animateValue('balance', oldBalance, state.balance, 1000);
+
+            setTimeout(() => {
+                if (state.balance <= 0) {
+                    document.getElementById('message').innerText = "BANKRUPT";
+                    setTimeout(() => location.reload(), 3000);
+                } else {
+                    document.getElementById('bet-controls').classList.remove('hidden-screen');
+                    const existingBtn = document.getElementById('end-day-btn');
+                    if (!existingBtn) {
+                        const btn = document.createElement('button');
+                        btn.id = 'end-day-btn';
+                        btn.innerText = "End Day";
+                        btn.onclick = endDay;
+                        btn.style.background = "transparent";
+                        btn.style.border = "1px solid var(--accent-red)";
+                        btn.style.color = "var(--accent-red)";
+                        btn.style.marginLeft = "10px";
+                        document.getElementById('bet-controls').appendChild(btn);
+                    }
+                }
+            }, 2000);
+        }
+
+        // --- PHASE 3: DEBT COLLECTION ---
+        function endDay() {
+            showScreen('phase-endday');
+            const msg = document.getElementById('debt-msg');
+            msg.innerText = `COLLECTOR IS HERE. YOU OWE $${state.dailyDebt}.`;
+        }
+
+        function startNextDay() {
+            const oldBalance = state.balance;
+            state.balance -= state.dailyDebt;
+            
+            if (state.balance < 0) {
+                shake('game-area', 20);
+                document.getElementById('message').innerText = "DEBT UNPAID";
+                setTimeout(() => location.reload(), 3000);
+                return;
+            }
+
+            state.day++;
+            state.dailyDebt += 20;
+            state.deckMax = 10 + Math.floor(state.day / 2);
+
+            // Clean up End Day button
+            const btn = document.getElementById('end-day-btn');
+            if (btn) btn.remove();
+
+            updateUI();
+            initSelection();
+        }
+
+        function showScreen(id) {
+            ['phase-selection', 'phase-table', 'phase-endday'].forEach(s => {
+                document.getElementById(s).classList.add('hidden-screen');
+            });
+            document.getElementById(id).classList.remove('hidden-screen');
+        }
+
+        // Start
+        updateUI();
+        initSelection();
+    </script>
+</body>
+
+</html>

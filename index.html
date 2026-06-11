@@ -1,757 +1,766 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Company Points &amp; Rewards Tracker</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
-      body {
-        font-family: "Inter", sans-serif;
-        background-color: #f8fafc;
-      }
-      .custom-scrollbar::-webkit-scrollbar {
-        width: 6px;
-      }
-      .custom-scrollbar::-webkit-scrollbar-track {
-        background: #f1f5f9;
-      }
-      .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
-        border-radius: 12px;
-      }
-      .sync-indicator {
-        transition: opacity 0.3s ease;
-      }
-      .archived-row {
-        opacity: 0.5;
-      }
-      .modal-overlay {
-        display: none;
-      }
-      .modal-overlay.open {
-        display: flex;
-      }
-    </style>
-  </head>
-  <body class="p-4 md:p-8">
-    <div id="app" class="max-w-6xl mx-auto">
 
-      <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
-        <div>
-          <div class="flex items-center gap-3">
-            <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">
-              Company Rewards Hub
-            </h1>
-            <div
-              id="syncStatus"
-              class="flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 rounded-full text-[10px] font-bold uppercase tracking-wider text-slate-500 sync-indicator opacity-0"
-            >
-              <span id="syncDot" class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-              <span id="syncText">Connected</span>
-            </div>
-          </div>
-          <p class="text-slate-500 mt-1">Earn points, crush targets, get cool prizes.</p>
-        </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Company Points &amp; Rewards Tracker</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
 
-        <div class="flex items-center gap-2 flex-wrap justify-end">
-          <div id="adminBadge" class="hidden items-center gap-1.5 px-3 py-1 bg-amber-100 rounded-lg text-xs font-semibold text-amber-800 border border-amber-200">
-            <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Admin Mode
-          </div>
-          <button
-            id="adminBtn"
-            onclick="toggleAdminMode()"
-            class="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 transition shadow-sm font-medium"
-          >
-            <i data-lucide="lock" class="w-4 h-4"></i> Admin Login
-          </button>
-          <button
-            id="addMemberBtn"
-            onclick="addTeamMember()"
-            class="hidden items-center gap-2 px-4 py-2 bg-blue-600 rounded-lg text-white hover:bg-blue-700 transition shadow-sm font-medium"
-          >
-            <i data-lucide="user-plus" class="w-4 h-4"></i> Add Person
-          </button>
-          <button
-            id="addRewardBtn"
-            onclick="openAddRewardModal()"
-            class="hidden items-center gap-2 px-4 py-2 bg-violet-600 rounded-lg text-white hover:bg-violet-700 transition shadow-sm font-medium"
-          >
-            <i data-lucide="gift" class="w-4 h-4"></i> Add Reward
-          </button>
-          <button
-            id="archiveToggleBtn"
-            onclick="toggleShowArchived()"
-            class="hidden items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-500 hover:bg-slate-50 transition shadow-sm text-sm font-medium"
-          >
-            <i data-lucide="archive" class="w-4 h-4"></i> <span id="archiveToggleLabel">Show Archived</span>
-          </button>
-        </div>
-      </header>
+    body {
+      font-family: "Inter", sans-serif;
+      background-color: #f8fafc;
+    }
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
 
-        <!-- Leaderboard -->
-        <div class="lg:col-span-2 space-y-4">
-          <div class="flex items-center justify-between mb-2">
-            <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
-              <i data-lucide="trophy" class="text-amber-500 w-5 h-5"></i> Team Leaderboard
-            </h2>
-            <span class="text-xs text-slate-400 font-medium">Real-time stats</span>
-          </div>
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
 
-          <div id="leaderboardList" class="space-y-3">
-            <div class="py-20 text-center text-slate-400 bg-white border border-slate-200 rounded-2xl shadow-sm">
-              <div class="animate-spin inline-block w-8 h-8 border-4 border-slate-200 border-t-blue-500 rounded-full mb-4"></div>
-              <p id="loadingMsg">Syncing Leaderboard...</p>
-            </div>
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 12px;
+    }
+
+    .sync-indicator {
+      transition: opacity 0.3s ease;
+    }
+
+    .archived-row {
+      opacity: 0.5;
+    }
+
+    .modal-overlay {
+      display: none;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+  </style>
+</head>
+
+<body class="p-4 md:p-8">
+  <div id="app" class="max-w-6xl mx-auto">
+
+    <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
+      <div>
+        <div class="flex items-center gap-3">
+          <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">
+            Company Rewards Hub
+          </h1>
+          <div id="syncStatus"
+            class="flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 rounded-full text-[10px] font-bold uppercase tracking-wider text-slate-500 sync-indicator opacity-0">
+            <span id="syncDot" class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+            <span id="syncText">Connected</span>
           </div>
         </div>
+        <p class="text-slate-500 mt-1">Earn points, crush targets, get cool prizes.</p>
+      </div>
 
-        <!-- Rewards Catalog -->
-        <div class="space-y-4">
-          <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2 mb-2">
-            <i data-lucide="gift" class="text-blue-500 w-5 h-5"></i> Available Rewards
+      <div class="flex items-center gap-2 flex-wrap justify-end">
+        <div id="adminBadge"
+          class="hidden items-center gap-1.5 px-3 py-1 bg-amber-100 rounded-lg text-xs font-semibold text-amber-800 border border-amber-200">
+          <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Admin Mode
+        </div>
+        <button id="adminBtn" onclick="toggleAdminMode()"
+          class="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 transition shadow-sm font-medium">
+          <i data-lucide="lock" class="w-4 h-4"></i> Admin Login
+        </button>
+        <button id="addMemberBtn" onclick="addTeamMember()"
+          class="hidden items-center gap-2 px-4 py-2 bg-blue-600 rounded-lg text-white hover:bg-blue-700 transition shadow-sm font-medium">
+          <i data-lucide="user-plus" class="w-4 h-4"></i> Add Person
+        </button>
+        <button id="addRewardBtn" onclick="openAddRewardModal()"
+          class="hidden items-center gap-2 px-4 py-2 bg-violet-600 rounded-lg text-white hover:bg-violet-700 transition shadow-sm font-medium">
+          <i data-lucide="gift" class="w-4 h-4"></i> Add Reward
+        </button>
+        <button id="archiveToggleBtn" onclick="toggleShowArchived()"
+          class="hidden items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-500 hover:bg-slate-50 transition shadow-sm text-sm font-medium">
+          <i data-lucide="archive" class="w-4 h-4"></i> <span id="archiveToggleLabel">Show Archived</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+      <div class="lg:col-span-2 space-y-4">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+            <i data-lucide="trophy" class="text-amber-500 w-5 h-5"></i> Team Leaderboard
           </h2>
-          <div id="rewardsCatalog" class="grid grid-cols-1 gap-3"></div>
+          <span class="text-xs text-slate-400 font-medium">Real-time stats</span>
         </div>
 
+        <div id="leaderboardList" class="space-y-3">
+          <div class="py-20 text-center text-slate-400 bg-white border border-slate-200 rounded-2xl shadow-sm">
+            <div
+              class="animate-spin inline-block w-8 h-8 border-4 border-slate-200 border-t-blue-500 rounded-full mb-4">
+            </div>
+            <p id="loadingMsg">Syncing Leaderboard...</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-4">
+        <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2 mb-2">
+          <i data-lucide="gift" class="text-blue-500 w-5 h-5"></i> Available Rewards
+        </h2>
+        <div id="rewardsCatalog" class="grid grid-cols-1 gap-3"></div>
       </div>
 
     </div>
 
-    <!-- Cash Out Modal -->
-    <div
-      id="cashOutModal"
-      class="modal-overlay fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 items-center justify-center p-4"
-    >
-      <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl flex flex-col">
-        <div class="p-6 border-b border-slate-100 flex justify-between items-center">
-          <div>
-            <h2 class="text-xl font-bold text-slate-800">Cash Out Rewards</h2>
-            <p id="modalUserSub" class="text-xs text-slate-500 mt-0.5">Select a reward to redeem for this user</p>
-          </div>
-          <button onclick="closeCashOutModal()" class="p-2 hover:bg-slate-100 rounded-full">
-            <i data-lucide="x" class="w-5 h-5 text-slate-400"></i>
+  </div>
+
+  <div id="cashOutModal"
+    class="modal-overlay fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl flex flex-col">
+      <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+        <div>
+          <h2 class="text-xl font-bold text-slate-800">Cash Out Rewards</h2>
+          <p id="modalUserSub" class="text-xs text-slate-500 mt-0.5">Select a reward to redeem for this user</p>
+        </div>
+        <button onclick="closeCashOutModal()" class="p-2 hover:bg-slate-100 rounded-full">
+          <i data-lucide="x" class="w-5 h-5 text-slate-400"></i>
+        </button>
+      </div>
+      <div id="modalRewardsList" class="p-6 overflow-y-auto custom-scrollbar max-h-[60vh] space-y-3"></div>
+    </div>
+  </div>
+
+  <div id="rewardModal"
+    class="modal-overlay fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl flex flex-col">
+      <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+        <h2 id="rewardModalTitle" class="text-xl font-bold text-slate-800">Add Reward</h2>
+        <button onclick="closeRewardModal()" class="p-2 hover:bg-slate-100 rounded-full">
+          <i data-lucide="x" class="w-5 h-5 text-slate-400"></i>
+        </button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Reward Title</label>
+          <input id="rewardTitleInput" type="text" placeholder="e.g. Free Premium Coffee"
+            class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-400" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Description</label>
+          <input id="rewardDescInput" type="text" placeholder="Short description of the reward"
+            class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-400" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Point Cost</label>
+          <input id="rewardCostInput" type="number" min="1" placeholder="e.g. 250"
+            class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-400" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Icon (Lucide
+            name)</label>
+          <input id="rewardIconInput" type="text" placeholder="e.g. coffee, gift, star, clock"
+            class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-400" />
+          <p class="text-[11px] text-slate-400 mt-1">Browse icons at <span
+              class="font-medium text-violet-600">lucide.dev/icons</span></p>
+        </div>
+        <input type="hidden" id="rewardEditId" value="" />
+        <div class="flex gap-3 pt-2">
+          <button onclick="closeRewardModal()"
+            class="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-medium transition">Cancel</button>
+          <button onclick="saveReward()"
+            class="flex-1 px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 text-sm font-bold transition">Save
+            Reward</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="adminLoginModal"
+    class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 items-center justify-center p-4">
+    <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-6 text-center">
+        <div class="inline-flex items-center justify-center w-12 h-12 bg-white/10 rounded-full mb-3">
+          <i data-lucide="shield-check" class="w-6 h-6 text-white"></i>
+        </div>
+        <h2 class="text-lg font-bold text-white">Admin Access</h2>
+        <p class="text-slate-400 text-xs mt-1">Enter your secret key to continue</p>
+      </div>
+      <div class="p-6 space-y-4">
+        <div class="relative">
+          <input id="adminPasswordInput" type="password" placeholder="Secret password"
+            onkeydown="if(event.key==='Enter') submitAdminLogin()"
+            class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 pr-10" />
+          <button onclick="togglePasswordVisibility()"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+            <i id="eyeIcon" data-lucide="eye" class="w-4 h-4"></i>
           </button>
         </div>
-        <div id="modalRewardsList" class="p-6 overflow-y-auto custom-scrollbar max-h-[60vh] space-y-3"></div>
-      </div>
-    </div>
-
-    <!-- Add / Edit Reward Modal -->
-    <div
-      id="rewardModal"
-      class="modal-overlay fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 items-center justify-center p-4"
-    >
-      <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl flex flex-col">
-        <div class="p-6 border-b border-slate-100 flex justify-between items-center">
-          <h2 id="rewardModalTitle" class="text-xl font-bold text-slate-800">Add Reward</h2>
-          <button onclick="closeRewardModal()" class="p-2 hover:bg-slate-100 rounded-full">
-            <i data-lucide="x" class="w-5 h-5 text-slate-400"></i>
-          </button>
-        </div>
-        <div class="p-6 space-y-4">
-          <div>
-            <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Reward Title</label>
-            <input id="rewardTitleInput" type="text" placeholder="e.g. Free Premium Coffee"
-              class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-400" />
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Description</label>
-            <input id="rewardDescInput" type="text" placeholder="Short description of the reward"
-              class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-400" />
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Point Cost</label>
-            <input id="rewardCostInput" type="number" min="1" placeholder="e.g. 250"
-              class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-400" />
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Icon (Lucide name)</label>
-            <input id="rewardIconInput" type="text" placeholder="e.g. coffee, gift, star, clock"
-              class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-400" />
-            <p class="text-[11px] text-slate-400 mt-1">Browse icons at <span class="font-medium text-violet-600">lucide.dev/icons</span></p>
-          </div>
-          <input type="hidden" id="rewardEditId" value="" />
-          <div class="flex gap-3 pt-2">
-            <button onclick="closeRewardModal()" class="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-medium transition">Cancel</button>
-            <button onclick="saveReward()" class="flex-1 px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 text-sm font-bold transition">Save Reward</button>
-          </div>
+        <p id="adminLoginError" class="text-xs text-red-500 font-medium hidden">Incorrect password — access denied.</p>
+        <div class="flex gap-3">
+          <button onclick="closeAdminLoginModal()"
+            class="flex-1 px-4 py-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 text-sm font-medium transition">Cancel</button>
+          <button onclick="submitAdminLogin()"
+            class="flex-1 px-4 py-2 bg-slate-800 text-white rounded-xl hover:bg-slate-900 text-sm font-bold transition">Unlock</button>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- Admin Login Modal -->
-    <div
-      id="adminLoginModal"
-      class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 items-center justify-center p-4"
-    >
-      <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl flex flex-col overflow-hidden">
-        <!-- Header -->
-        <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-6 text-center">
-          <div class="inline-flex items-center justify-center w-12 h-12 bg-white/10 rounded-full mb-3">
-            <i data-lucide="shield-check" class="w-6 h-6 text-white"></i>
-          </div>
-          <h2 class="text-lg font-bold text-white">Admin Access</h2>
-          <p class="text-slate-400 text-xs mt-1">Enter your secret key to continue</p>
+  <div id="confirmModal"
+    class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] items-center justify-center p-4">
+    <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden">
+      <div class="p-6">
+        <div id="confirmIconWrap" class="w-10 h-10 rounded-full flex items-center justify-center mb-4">
+          <i id="confirmIcon" data-lucide="alert-triangle" class="w-5 h-5"></i>
         </div>
-        <!-- Body -->
-        <div class="p-6 space-y-4">
-          <div class="relative">
-            <input
-              id="adminPasswordInput"
-              type="password"
-              placeholder="Secret password"
-              onkeydown="if(event.key==='Enter') submitAdminLogin()"
-              class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 pr-10"
-            />
-            <button onclick="togglePasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-              <i id="eyeIcon" data-lucide="eye" class="w-4 h-4"></i>
-            </button>
-          </div>
-          <p id="adminLoginError" class="text-xs text-red-500 font-medium hidden">Incorrect password — access denied.</p>
-          <div class="flex gap-3">
-            <button onclick="closeAdminLoginModal()" class="flex-1 px-4 py-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 text-sm font-medium transition">Cancel</button>
-            <button onclick="submitAdminLogin()" class="flex-1 px-4 py-2 bg-slate-800 text-white rounded-xl hover:bg-slate-900 text-sm font-bold transition">Unlock</button>
-          </div>
+        <h3 id="confirmTitle" class="text-base font-bold text-slate-800 mb-1"></h3>
+        <p id="confirmMessage" class="text-sm text-slate-500 leading-relaxed"></p>
+      </div>
+      <div class="px-6 pb-6 flex gap-3">
+        <button id="confirmCancelBtn" onclick="_confirmResolve(false)"
+          class="flex-1 px-4 py-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 text-sm font-medium transition">Cancel</button>
+        <button id="confirmOkBtn" onclick="_confirmResolve(true)"
+          class="flex-1 px-4 py-2 rounded-xl text-white text-sm font-bold transition">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="promptModal"
+    class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] items-center justify-center p-4">
+    <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden">
+      <div class="p-6 border-b border-slate-100 flex justify-between items-start">
+        <div>
+          <h3 id="promptTitle" class="text-base font-bold text-slate-800"></h3>
+          <p id="promptSubtitle" class="text-xs text-slate-400 mt-0.5"></p>
+        </div>
+        <button onclick="_promptResolve(null)" class="p-1.5 hover:bg-slate-100 rounded-full ml-4 shrink-0">
+          <i data-lucide="x" class="w-4 h-4 text-slate-400"></i>
+        </button>
+      </div>
+      <div class="p-6 space-y-4">
+        <input id="promptInput" type="text"
+          onkeydown="if(event.key==='Enter') _promptResolve(document.getElementById('promptInput').value)"
+          class="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+        <p id="promptError" class="text-xs text-red-500 hidden"></p>
+        <div class="flex gap-3">
+          <button onclick="_promptResolve(null)"
+            class="flex-1 px-4 py-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 text-sm font-medium transition">Cancel</button>
+          <button id="promptOkBtn" onclick="_promptResolve(document.getElementById('promptInput').value)"
+            class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 text-sm font-bold transition">OK</button>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- Reusable Confirm Modal -->
-    <div id="confirmModal" class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] items-center justify-center p-4">
-      <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden">
-        <div class="p-6">
-          <div id="confirmIconWrap" class="w-10 h-10 rounded-full flex items-center justify-center mb-4">
-            <i id="confirmIcon" data-lucide="alert-triangle" class="w-5 h-5"></i>
-          </div>
-          <h3 id="confirmTitle" class="text-base font-bold text-slate-800 mb-1"></h3>
-          <p id="confirmMessage" class="text-sm text-slate-500 leading-relaxed"></p>
-        </div>
-        <div class="px-6 pb-6 flex gap-3">
-          <button id="confirmCancelBtn" onclick="_confirmResolve(false)" class="flex-1 px-4 py-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 text-sm font-medium transition">Cancel</button>
-          <button id="confirmOkBtn" onclick="_confirmResolve(true)" class="flex-1 px-4 py-2 rounded-xl text-white text-sm font-bold transition">Confirm</button>
-        </div>
-      </div>
+  <div id="toast"
+    class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] transition-all duration-300 opacity-0 translate-y-4 pointer-events-none">
+    <div id="toastInner"
+      class="flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold text-white min-w-[220px] max-w-xs">
+      <i id="toastIcon" data-lucide="check-circle" class="w-4 h-4 shrink-0"></i>
+      <span id="toastMsg"></span>
     </div>
+  </div>
 
-    <!-- Reusable Prompt Modal -->
-    <div id="promptModal" class="modal-overlay fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] items-center justify-center p-4">
-      <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden">
-        <div class="p-6 border-b border-slate-100 flex justify-between items-start">
-          <div>
-            <h3 id="promptTitle" class="text-base font-bold text-slate-800"></h3>
-            <p id="promptSubtitle" class="text-xs text-slate-400 mt-0.5"></p>
-          </div>
-          <button onclick="_promptResolve(null)" class="p-1.5 hover:bg-slate-100 rounded-full ml-4 shrink-0">
-            <i data-lucide="x" class="w-4 h-4 text-slate-400"></i>
-          </button>
-        </div>
-        <div class="p-6 space-y-4">
-          <input id="promptInput" type="text" onkeydown="if(event.key==='Enter') _promptResolve(document.getElementById('promptInput').value)"
-            class="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
-          <p id="promptError" class="text-xs text-red-500 hidden"></p>
-          <div class="flex gap-3">
-            <button onclick="_promptResolve(null)" class="flex-1 px-4 py-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 text-sm font-medium transition">Cancel</button>
-            <button id="promptOkBtn" onclick="_promptResolve(document.getElementById('promptInput').value)" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 text-sm font-bold transition">OK</button>
-          </div>
-        </div>
-      </div>
-    </div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, collection, onSnapshot, updateDoc, deleteDoc, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] transition-all duration-300 opacity-0 translate-y-4 pointer-events-none">
-      <div id="toastInner" class="flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold text-white min-w-[220px] max-w-xs">
-        <i id="toastIcon" data-lucide="check-circle" class="w-4 h-4 shrink-0"></i>
-        <span id="toastMsg"></span>
-      </div>
-    </div>
+    const firebaseConfig = {
+      apiKey: "AIzaSyB8m9mDbFwK2urFRYUYDsZ0S7hMMRlzpBc",
+      authDomain: "artha-rewards.firebaseapp.com",
+      projectId: "artha-rewards",
+      storageBucket: "artha-rewards.firebasestorage.app",
+      messagingSenderId: "630554194730",
+      appId: "1:630554194730:web:8b5428eb1c2152ec3ee453"
+    };
 
-    <script type="module">
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-      import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-      import { getFirestore, doc, setDoc, collection, onSnapshot, updateDoc, deleteDoc, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    const LOCAL_STORAGE_KEY = "company_rewards_backup";
+    const LOCAL_REWARDS_KEY = "company_rewards_catalog";
+    const ADMIN_PASSWORD = "squidward123";
 
-      const firebaseConfig = {
-        apiKey: "AIzaSyDQL5CAh-jO173WtTTut46JPi9-rZMtssE",
-        authDomain: "localization-tracker-58afb.firebaseapp.com",
-        projectId: "localization-tracker-58afb",
-        storageBucket: "localization-tracker-58afb.firebasestorage.app",
-        messagingSenderId: "812531320388",
-        appId: "1:812531320388:web:a9778c11d8f046edf65e11",
-      };
+    let isCloudEnabled = false;
+    let isAdmin = false;
+    let showArchived = false;
+    let db, auth;
 
-      const LOCAL_STORAGE_KEY = "company_rewards_backup";
-      const LOCAL_REWARDS_KEY = "company_rewards_catalog";
-      const ADMIN_PASSWORD = "squidward123";
+    let teamMembers = [];
+    let rewardsCatalog = [];
+    let activeUserId = null;
 
-      let isCloudEnabled = false;
-      let isAdmin = false;
-      let showArchived = false;
-      let db, auth;
+    // ── Modal Helpers ─────────────────────────────────────────────────────────
+    let _confirmResolveCallback = null;
+    window._confirmResolve = (val) => {
+      document.getElementById('confirmModal').classList.remove('open');
+      if (_confirmResolveCallback) { _confirmResolveCallback(val); _confirmResolveCallback = null; }
+    };
 
-      let teamMembers = [];
-      let rewardsCatalog = [];
-      let activeUserId = null;
-
-      // ── Modal Helpers ─────────────────────────────────────────────────────────
-      let _confirmResolveCallback = null;
-      window._confirmResolve = (val) => {
-        document.getElementById('confirmModal').classList.remove('open');
-        if (_confirmResolveCallback) { _confirmResolveCallback(val); _confirmResolveCallback = null; }
-      };
-
-      function showConfirm({ title, message, okLabel = 'Confirm', danger = false, icon = 'alert-triangle' }) {
-        return new Promise(resolve => {
-          _confirmResolveCallback = resolve;
-          document.getElementById('confirmTitle').innerText = title;
-          document.getElementById('confirmMessage').innerText = message;
-          const iconEl = document.getElementById('confirmIcon');
-          iconEl.setAttribute('data-lucide', icon);
-          const wrap = document.getElementById('confirmIconWrap');
-          wrap.className = `w-10 h-10 rounded-full flex items-center justify-center mb-4 ${danger ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'}`;
-          const okBtn = document.getElementById('confirmOkBtn');
-          okBtn.innerText = okLabel;
-          okBtn.className = `flex-1 px-4 py-2 rounded-xl text-white text-sm font-bold transition ${danger ? 'bg-red-600 hover:bg-red-700' : 'bg-slate-800 hover:bg-slate-900'}`;
-          document.getElementById('confirmModal').classList.add('open');
-          lucide.createIcons();
-        });
-      }
-
-      let _promptResolveCallback = null;
-      window._promptResolve = (val) => {
-        document.getElementById('promptModal').classList.remove('open');
-        document.getElementById('promptError').classList.add('hidden');
-        if (_promptResolveCallback) { _promptResolveCallback(val); _promptResolveCallback = null; }
-      };
-
-      function showPromptModal({ title, subtitle = '', placeholder = '', inputType = 'text', validate = null }) {
-        return new Promise(resolve => {
-          _promptResolveCallback = resolve;
-          document.getElementById('promptTitle').innerText = title;
-          document.getElementById('promptSubtitle').innerText = subtitle;
-          const inp = document.getElementById('promptInput');
-          inp.value = '';
-          inp.type = inputType;
-          inp.placeholder = placeholder;
-          document.getElementById('promptError').classList.add('hidden');
-
-          // Wrap resolve to validate first
-          const origResolve = window._promptResolve;
-          window._promptResolve = (val) => {
-            if (val === null) { origResolve(null); window._promptResolve = origResolve; return; }
-            if (validate) {
-              const err = validate(val);
-              if (err) {
-                const errEl = document.getElementById('promptError');
-                errEl.innerText = err;
-                errEl.classList.remove('hidden');
-                return;
-              }
-            }
-            origResolve(val);
-            window._promptResolve = origResolve;
-          };
-
-          document.getElementById('promptModal').classList.add('open');
-          lucide.createIcons();
-          setTimeout(() => inp.focus(), 50);
-        });
-      }
-
-      let _toastTimer = null;
-      function showToast(message, type = 'success') {
-        const toast = document.getElementById('toast');
-        const inner = document.getElementById('toastInner');
-        const iconEl = document.getElementById('toastIcon');
-        document.getElementById('toastMsg').innerText = message;
-        const styles = {
-          success: { bg: 'bg-emerald-600', icon: 'check-circle' },
-          error:   { bg: 'bg-red-600',     icon: 'x-circle' },
-          info:    { bg: 'bg-blue-600',    icon: 'info' },
-        };
-        const s = styles[type] || styles.success;
-        inner.className = `flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold text-white min-w-[220px] max-w-xs ${s.bg}`;
-        iconEl.setAttribute('data-lucide', s.icon);
+    function showConfirm({ title, message, okLabel = 'Confirm', danger = false, icon = 'alert-triangle' }) {
+      return new Promise(resolve => {
+        _confirmResolveCallback = resolve;
+        document.getElementById('confirmTitle').innerText = title;
+        document.getElementById('confirmMessage').innerText = message;
+        const iconEl = document.getElementById('confirmIcon');
+        iconEl.setAttribute('data-lucide', icon);
+        const wrap = document.getElementById('confirmIconWrap');
+        wrap.className = `w-10 h-10 rounded-full flex items-center justify-center mb-4 ${danger ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'}`;
+        const okBtn = document.getElementById('confirmOkBtn');
+        okBtn.innerText = okLabel;
+        okBtn.className = `flex-1 px-4 py-2 rounded-xl text-white text-sm font-bold transition ${danger ? 'bg-red-600 hover:bg-red-700' : 'bg-slate-800 hover:bg-slate-900'}`;
+        document.getElementById('confirmModal').classList.add('open');
         lucide.createIcons();
-        toast.classList.remove('opacity-0', 'translate-y-4');
-        if (_toastTimer) clearTimeout(_toastTimer);
-        _toastTimer = setTimeout(() => toast.classList.add('opacity-0', 'translate-y-4'), 3000);
-      }
+      });
+    }
 
-      // ── Default seed rewards (used if nothing is saved yet) ──────────────────
-      const DEFAULT_REWARDS = [
-        { id: "r1", title: "Free Premium Coffee", cost: 50, icon: "coffee", desc: "A fancy caffeinated beverage on the house.", archived: false },
-        { id: "r2", title: "Friday Early Release", cost: 250, icon: "clock", desc: "Dip out after lunch on a Friday.", archived: false },
-        { id: "r3", title: "Company Branded Swag", cost: 350, icon: "shirt", desc: "Your choice of high quality apparel.", archived: false },
-        { id: "r4", title: "Team Lunch Pick", cost: 500, icon: "utensils", desc: "You pick where the team orders lunch, company paid.", archived: false },
-        { id: "r5", title: "Paid Day Off", cost: 1000, icon: "calendar-days", desc: "An extra mental health day to completely unplug.", archived: false }
+    let _promptResolveCallback = null;
+    window._promptResolve = (val) => {
+      document.getElementById('promptModal').classList.remove('open');
+      document.getElementById('promptError').classList.add('hidden');
+      if (_promptResolveCallback) { _promptResolveCallback(val); _promptResolveCallback = null; }
+    };
+
+    function showPromptModal({ title, subtitle = '', placeholder = '', inputType = 'text', validate = null }) {
+      return new Promise(resolve => {
+        _promptResolveCallback = resolve;
+        document.getElementById('promptTitle').innerText = title;
+        document.getElementById('promptSubtitle').innerText = subtitle;
+        const inp = document.getElementById('promptInput');
+        inp.value = '';
+        inp.type = inputType;
+        inp.placeholder = placeholder;
+        document.getElementById('promptError').classList.add('hidden');
+
+        // Wrap resolve to validate first
+        const origResolve = window._promptResolve;
+        window._promptResolve = (val) => {
+          if (val === null) { origResolve(null); window._promptResolve = origResolve; return; }
+          if (validate) {
+            const err = validate(val);
+            if (err) {
+              const errEl = document.getElementById('promptError');
+              errEl.innerText = err;
+              errEl.classList.remove('hidden');
+              return;
+            }
+          }
+          origResolve(val);
+          window._promptResolve = origResolve;
+        };
+
+        document.getElementById('promptModal').classList.add('open');
+        lucide.createIcons();
+        setTimeout(() => inp.focus(), 50);
+      });
+    }
+
+    let _toastTimer = null;
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      const inner = document.getElementById('toastInner');
+      const iconEl = document.getElementById('toastIcon');
+      document.getElementById('toastMsg').innerText = message;
+      const styles = {
+        success: { bg: 'bg-emerald-600', icon: 'check-circle' },
+        error: { bg: 'bg-red-600', icon: 'x-circle' },
+        info: { bg: 'bg-blue-600', icon: 'info' },
+      };
+      const s = styles[type] || styles.success;
+      inner.className = `flex items-center gap-3 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold text-white min-w-[220px] max-w-xs ${s.bg}`;
+      iconEl.setAttribute('data-lucide', s.icon);
+      lucide.createIcons();
+      toast.classList.remove('opacity-0', 'translate-y-4');
+      if (_toastTimer) clearTimeout(_toastTimer);
+      _toastTimer = setTimeout(() => toast.classList.add('opacity-0', 'translate-y-4'), 3000);
+    }
+
+    // ── Default seed rewards (used if nothing is saved yet) ──────────────────
+    const DEFAULT_REWARDS = [
+      { id: "r1", title: "Free Premium Coffee", cost: 50, icon: "coffee", desc: "A fancy caffeinated beverage on the house.", archived: false },
+      { id: "r2", title: "Friday Early Release", cost: 250, icon: "clock", desc: "Dip out after lunch on a Friday.", archived: false },
+      { id: "r3", title: "Company Branded Swag", cost: 350, icon: "shirt", desc: "Your choice of high quality apparel.", archived: false },
+      { id: "r4", title: "Team Lunch Pick", cost: 500, icon: "utensils", desc: "You pick where the team orders lunch, company paid.", archived: false },
+      { id: "r5", title: "Paid Day Off", cost: 1000, icon: "calendar-days", desc: "An extra mental health day to completely unplug.", archived: false }
+    ];
+
+    // ── Sync indicator ────────────────────────────────────────────────────────
+    function showSyncing(text = "Syncing...") {
+      const el = document.getElementById("syncStatus");
+      const txt = document.getElementById("syncText");
+      if (!el || !txt) return;
+      txt.innerText = text;
+      el.classList.replace("opacity-0", "opacity-100");
+      setTimeout(() => el.classList.replace("opacity-100", "opacity-0"), 2000);
+    }
+
+    // ── Local Storage Fallback ────────────────────────────────────────────────
+    window.loadLocalData = () => {
+      const savedMembers = localStorage.getItem(LOCAL_STORAGE_KEY);
+      teamMembers = savedMembers ? JSON.parse(savedMembers) : [
+        { id: "l1", name: "Ken", points: 150, archived: false },
+        { id: "l2", name: "Tal", points: 300, archived: false },
+        { id: "l3", name: "Ryan", points: 75, archived: false }
       ];
 
-      // ── Sync indicator ────────────────────────────────────────────────────────
-      function showSyncing(text = "Syncing...") {
-        const el = document.getElementById("syncStatus");
-        const txt = document.getElementById("syncText");
-        if (!el || !txt) return;
-        txt.innerText = text;
-        el.classList.replace("opacity-0", "opacity-100");
-        setTimeout(() => el.classList.replace("opacity-100", "opacity-0"), 2000);
-      }
+      const savedRewards = localStorage.getItem(LOCAL_REWARDS_KEY);
+      rewardsCatalog = savedRewards ? JSON.parse(savedRewards) : DEFAULT_REWARDS.map(r => ({ ...r }));
 
-      // ── Local Storage Fallback ────────────────────────────────────────────────
-      function loadLocalData() {
-        const savedMembers = localStorage.getItem(LOCAL_STORAGE_KEY);
-        teamMembers = savedMembers ? JSON.parse(savedMembers) : [
-          { id: "l1", name: "Ken", points: 150, archived: false },
-          { id: "l2", name: "Tal", points: 300, archived: false },
-          { id: "l3", name: "Ryan", points: 75, archived: false }
-        ];
+      renderAll();
+    };
 
-        const savedRewards = localStorage.getItem(LOCAL_REWARDS_KEY);
-        rewardsCatalog = savedRewards ? JSON.parse(savedRewards) : DEFAULT_REWARDS.map(r => ({ ...r }));
+    function saveLocalData() {
+      if (isCloudEnabled) return;
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(teamMembers));
+      localStorage.setItem(LOCAL_REWARDS_KEY, JSON.stringify(rewardsCatalog));
+      showSyncing("Saved locally");
+    }
 
-        renderAll();
-      }
+    // ── Firebase Init ─────────────────────────────────────────────────────────
+    async function init() {
+      try {
+        const app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+        await signInAnonymously(auth);
 
-      function saveLocalData() {
-        if (isCloudEnabled) return;
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(teamMembers));
-        localStorage.setItem(LOCAL_REWARDS_KEY, JSON.stringify(rewardsCatalog));
-        showSyncing("Saved locally");
-      }
+        onAuthStateChanged(auth, (user) => {
+          if (user) {
+            isCloudEnabled = true;
+            const syncStatus = document.getElementById("syncStatus");
+            const syncText = document.getElementById("syncText");
+            const syncDot = document.getElementById("syncDot");
+            if (syncStatus) syncStatus.classList.remove("opacity-0");
+            if (syncText) syncText.innerText = "Live Connected";
+            if (syncDot) syncDot.className = "w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse";
 
-      // ── Firebase Init ─────────────────────────────────────────────────────────
-      async function init() {
-        try {
-          const app = initializeApp(firebaseConfig);
-          auth = getAuth(app);
-          db = getFirestore(app);
-          await signInAnonymously(auth);
-
-          onAuthStateChanged(auth, (user) => {
-            if (user) {
-              isCloudEnabled = true;
-              document.getElementById("syncStatus").classList.remove("opacity-0");
-              document.getElementById("syncText").innerText = "Live Connected";
-
-              // Listen to members
-              const usersCol = collection(db, "rewards_users");
-              onSnapshot(usersCol, (snap) => {
-                teamMembers = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-                renderAll();
-              }, (err) => {
-                console.warn("Firestore access error, running local fallback mode:", err);
-                switchToLocalMode();
-              });
-
-              // Listen to rewards catalog
-              const rewardsCol = collection(db, "rewards_catalog");
-              onSnapshot(rewardsCol, async (snap) => {
-                if (snap.empty) {
-                  // Seed defaults into Firestore on first load
-                  for (const r of DEFAULT_REWARDS) {
-                    const { id, ...data } = r;
-                    await addDoc(rewardsCol, data);
-                  }
-                } else {
-                  rewardsCatalog = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-                  renderRewardsCatalog();
+            // Listen to members
+            const usersCol = collection(db, "rewards_users");
+            onSnapshot(usersCol, async (snap) => {
+              if (snap.empty) {
+                // Push local data up if cloud database is fresh and completely empty
+                for (const member of teamMembers) {
+                  const { id, ...data } = member;
+                  await addDoc(usersCol, data);
                 }
-              }, (err) => {
-                console.warn("Rewards Firestore error:", err);
-                rewardsCatalog = DEFAULT_REWARDS.map(r => ({ ...r }));
+              } else {
+                teamMembers = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(teamMembers));
+                renderLeaderboard();
+              }
+            }, (err) => {
+              console.warn("Firestore access error, running local fallback mode:", err);
+              switchToLocalMode();
+            });
+
+            // Listen to rewards catalog
+            const rewardsCol = collection(db, "rewards_catalog");
+            onSnapshot(rewardsCol, async (snap) => {
+              if (snap.empty) {
+                // Seed defaults/current items into Firestore on first live load
+                for (const r of rewardsCatalog) {
+                  const { id, ...data } = r;
+                  await addDoc(rewardsCol, data);
+                }
+              } else {
+                rewardsCatalog = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+                localStorage.setItem(LOCAL_REWARDS_KEY, JSON.stringify(rewardsCatalog));
                 renderRewardsCatalog();
-              });
-            }
-          });
-        } catch (err) {
-          console.warn("Firebase handshake failed. Running in Local Storage backup mode.", err);
-          switchToLocalMode();
-        }
+              }
+            }, (err) => {
+              console.warn("Rewards Firestore error, running local fallback mode:", err);
+              switchToLocalMode();
+            });
+          }
+        });
+      } catch (err) {
+        console.warn("Firebase handshake failed. Running in Local Storage backup mode.", err);
+        switchToLocalMode();
       }
+    }
 
-      function switchToLocalMode() {
-        isCloudEnabled = false;
-        document.getElementById("syncStatus").classList.remove("opacity-0");
-        document.getElementById("syncText").innerText = "Offline Mode";
-        document.getElementById("syncDot").classList.replace("bg-emerald-500", "bg-amber-500");
-        loadLocalData();
-      }
+    function switchToLocalMode() {
+      isCloudEnabled = false;
+      const syncStatus = document.getElementById("syncStatus");
+      const syncText = document.getElementById("syncText");
+      const syncDot = document.getElementById("syncDot");
+      if (syncStatus) syncStatus.classList.remove("opacity-0");
+      if (syncText) syncText.innerText = "Offline Mode";
+      if (syncDot) syncDot.className = "w-1.5 h-1.5 bg-amber-500 rounded-full";
+      loadLocalData();
+    }
 
-      // ── Admin Toggle ──────────────────────────────────────────────────────────
-      window.toggleAdminMode = () => {
-        if (isAdmin) {
-          isAdmin = false;
-          document.getElementById("adminBadge").classList.replace("flex", "hidden");
-          ["addMemberBtn", "addRewardBtn", "archiveToggleBtn"].forEach(id => {
-            document.getElementById(id).classList.replace("flex", "hidden");
-          });
-          document.getElementById("adminBtn").innerHTML = `<i data-lucide="lock" class="w-4 h-4"></i> Admin Login`;
-          renderAll();
-          lucide.createIcons();
-        } else {
-          // Open the admin login modal instead of prompt()
-          const modal = document.getElementById("adminLoginModal");
-          const input = document.getElementById("adminPasswordInput");
-          const error = document.getElementById("adminLoginError");
-          input.value = "";
-          error.classList.add("hidden");
-          modal.classList.add("open");
-          lucide.createIcons();
-          setTimeout(() => input.focus(), 50);
-        }
-      };
-
-      window.submitAdminLogin = () => {
-        const attempt = document.getElementById("adminPasswordInput").value;
-        const error = document.getElementById("adminLoginError");
-        if (attempt === ADMIN_PASSWORD) {
-          closeAdminLoginModal();
-          isAdmin = true;
-          document.getElementById("adminBadge").classList.replace("hidden", "flex");
-          ["addMemberBtn", "addRewardBtn", "archiveToggleBtn"].forEach(id => {
-            document.getElementById(id).classList.replace("hidden", "flex");
-          });
-          document.getElementById("adminBtn").innerHTML = `<i data-lucide="log-out" class="w-4 h-4"></i> Exit Admin`;
-          renderAll();
-          lucide.createIcons();
-        } else {
-          error.classList.remove("hidden");
-          document.getElementById("adminPasswordInput").classList.add("border-red-400", "ring-2", "ring-red-200");
-          setTimeout(() => {
-            document.getElementById("adminPasswordInput").classList.remove("border-red-400", "ring-2", "ring-red-200");
-          }, 1500);
-        }
-      };
-
-      window.closeAdminLoginModal = () => {
-        document.getElementById("adminLoginModal").classList.remove("open");
-      };
-
-      window.togglePasswordVisibility = () => {
-        const input = document.getElementById("adminPasswordInput");
-        const icon = document.getElementById("eyeIcon");
-        if (input.type === "password") {
-          input.type = "text";
-          icon.setAttribute("data-lucide", "eye-off");
-        } else {
-          input.type = "password";
-          icon.setAttribute("data-lucide", "eye");
-        }
-        lucide.createIcons();
-      };
-
-      // ── Show / Hide Archived ──────────────────────────────────────────────────
-      window.toggleShowArchived = () => {
-        showArchived = !showArchived;
-        document.getElementById("archiveToggleLabel").innerText = showArchived ? "Hide Archived" : "Show Archived";
+    // ── Admin Toggle ──────────────────────────────────────────────────────────
+    window.toggleAdminMode = () => {
+      if (isAdmin) {
+        isAdmin = false;
+        document.getElementById("adminBadge").classList.replace("flex", "hidden");
+        ["addMemberBtn", "addRewardBtn", "archiveToggleBtn"].forEach(id => {
+          document.getElementById(id).classList.replace("flex", "hidden");
+        });
+        document.getElementById("adminBtn").innerHTML = `<i data-lucide="lock" class="w-4 h-4"></i> Admin Login`;
         renderAll();
-      };
-
-      // ── People Management ─────────────────────────────────────────────────────
-      window.addTeamMember = async () => {
-        const name = await showPromptModal({
-          title: 'Add Team Member',
-          subtitle: 'Enter the new member\'s name',
-          placeholder: 'e.g. Alex',
-          validate: v => v.trim() ? null : 'Name cannot be empty.'
-        });
-        if (!name || !name.trim()) return;
-        const newUser = { name: name.trim(), points: 0, archived: false };
-
-        if (isCloudEnabled) {
-          showSyncing('Adding member...');
-          await addDoc(collection(db, 'rewards_users'), newUser);
-        } else {
-          newUser.id = 'local-' + Date.now();
-          teamMembers.push(newUser);
-          saveLocalData();
-          renderAll();
-        }
-        showToast(`${name.trim()} added to the leaderboard!`);
-      };
-
-      window.archiveMember = async (id, name, currentlyArchived) => {
-        const action = currentlyArchived ? 'restore' : 'archive';
-        const confirmed = await showConfirm({
-          title: `${currentlyArchived ? 'Restore' : 'Archive'} ${name}?`,
-          message: currentlyArchived
-            ? `${name} will be visible on the leaderboard again.`
-            : `${name} will be hidden from the leaderboard but their data is kept.`,
-          okLabel: currentlyArchived ? 'Restore' : 'Archive',
-          icon: currentlyArchived ? 'archive-restore' : 'archive',
-          danger: false
-        });
-        if (!confirmed) return;
-
-        if (isCloudEnabled) {
-          showSyncing(currentlyArchived ? 'Restoring member...' : 'Archiving member...');
-          await updateDoc(doc(db, 'rewards_users', id), { archived: !currentlyArchived });
-        } else {
-          const user = teamMembers.find(m => m.id === id);
-          if (user) { user.archived = !currentlyArchived; saveLocalData(); renderAll(); }
-        }
-        showToast(`${name} ${currentlyArchived ? 'restored' : 'archived'}.`, 'info');
-      };
-
-      window.modifyPoints = async (id, currentPoints) => {
-        const member = teamMembers.find(m => m.id === id);
-        const input = await showPromptModal({
-          title: 'Adjust Points',
-          subtitle: `Current balance: ${currentPoints} pts${member ? ' — ' + member.name : ''}`,
-          placeholder: 'e.g. 50 or -25',
-          inputType: 'number',
-          validate: v => (!v || isNaN(v)) ? 'Please enter a valid number.' : null
-        });
-        if (input === null || isNaN(input)) return;
-        const finalPoints = Math.max(0, currentPoints + parseInt(input));
-
-        if (isCloudEnabled) {
-          showSyncing('Updating points...');
-          await updateDoc(doc(db, 'rewards_users', id), { points: finalPoints });
-        } else {
-          const user = teamMembers.find(m => m.id === id);
-          if (user) { user.points = finalPoints; saveLocalData(); renderAll(); }
-        }
-        const diff = parseInt(input);
-        showToast(`Points ${diff >= 0 ? '+' + diff : diff} applied. New balance: ${finalPoints}.`, diff >= 0 ? 'success' : 'info');
-      };
-
-      window.removeUser = async (id, name) => {
-        const confirmed = await showConfirm({
-          title: `Delete ${name}?`,
-          message: 'This will permanently remove them from the tracker. This cannot be undone.',
-          okLabel: 'Delete Permanently',
-          danger: true,
-          icon: 'trash-2'
-        });
-        if (!confirmed) return;
-        if (isCloudEnabled) {
-          showSyncing('Removing member...');
-          await deleteDoc(doc(db, 'rewards_users', id));
-        } else {
-          teamMembers = teamMembers.filter(m => m.id !== id);
-          saveLocalData();
-          renderAll();
-        }
-        showToast(`${name} removed.`, 'error');
-      };
-
-      // ── Rewards Management ────────────────────────────────────────────────────
-      window.openAddRewardModal = () => {
-        document.getElementById("rewardModalTitle").innerText = "Add Reward";
-        document.getElementById("rewardEditId").value = "";
-        ["rewardTitleInput", "rewardDescInput", "rewardCostInput", "rewardIconInput"].forEach(id => {
-          document.getElementById(id).value = "";
-        });
-        document.getElementById("rewardModal").classList.add("open");
         lucide.createIcons();
-      };
-
-      window.openEditRewardModal = (id) => {
-        const reward = rewardsCatalog.find(r => r.id === id);
-        if (!reward) return;
-        document.getElementById("rewardModalTitle").innerText = "Edit Reward";
-        document.getElementById("rewardEditId").value = id;
-        document.getElementById("rewardTitleInput").value = reward.title;
-        document.getElementById("rewardDescInput").value = reward.desc;
-        document.getElementById("rewardCostInput").value = reward.cost;
-        document.getElementById("rewardIconInput").value = reward.icon;
-        document.getElementById("rewardModal").classList.add("open");
+      } else {
+        const modal = document.getElementById("adminLoginModal");
+        const input = document.getElementById("adminPasswordInput");
+        const error = document.getElementById("adminLoginError");
+        input.value = "";
+        error.classList.add("hidden");
+        modal.classList.add("open");
         lucide.createIcons();
-      };
+        setTimeout(() => input.focus(), 50);
+      }
+    };
 
-      window.closeRewardModal = () => {
-        document.getElementById("rewardModal").classList.remove("open");
-      };
-
-      window.saveReward = async () => {
-        const title = document.getElementById("rewardTitleInput").value.trim();
-        const desc = document.getElementById("rewardDescInput").value.trim();
-        const cost = parseInt(document.getElementById("rewardCostInput").value);
-        const icon = document.getElementById("rewardIconInput").value.trim() || "gift";
-        const editId = document.getElementById("rewardEditId").value;
-
-        if (!title || isNaN(cost) || cost < 1) {
-          showToast('Please fill in a valid title and point cost.', 'error');
-          return;
-        }
-
-        const data = { title, desc, cost, icon, archived: false };
-
-        if (editId) {
-          // Edit existing
-          if (isCloudEnabled) {
-            showSyncing("Saving reward...");
-            await updateDoc(doc(db, "rewards_catalog", editId), { title, desc, cost, icon });
-          } else {
-            const r = rewardsCatalog.find(r => r.id === editId);
-            if (r) { Object.assign(r, { title, desc, cost, icon }); saveLocalData(); renderRewardsCatalog(); }
-          }
-        } else {
-          // Add new
-          if (isCloudEnabled) {
-            showSyncing("Adding reward...");
-            await addDoc(collection(db, "rewards_catalog"), data);
-          } else {
-            data.id = "reward-" + Date.now();
-            rewardsCatalog.push(data);
-            saveLocalData();
-            renderRewardsCatalog();
-          }
-        }
-        closeRewardModal();
-      };
-
-      window.archiveReward = async (id, currentlyArchived) => {
-        const action = currentlyArchived ? "restore" : "archive";
-        if (isCloudEnabled) {
-          showSyncing(currentlyArchived ? "Restoring reward..." : "Archiving reward...");
-          await updateDoc(doc(db, "rewards_catalog", id), { archived: !currentlyArchived });
-        } else {
-          const r = rewardsCatalog.find(r => r.id === id);
-          if (r) { r.archived = !currentlyArchived; saveLocalData(); renderRewardsCatalog(); }
-        }
-      };
-
-      window.deleteReward = async (id, title) => {
-        const confirmed = await showConfirm({
-          title: `Delete "${title}"?`,
-          message: 'This reward will be permanently removed and cannot be undone.',
-          okLabel: 'Delete Reward',
-          danger: true,
-          icon: 'trash-2'
+    window.submitAdminLogin = () => {
+      const attempt = document.getElementById("adminPasswordInput").value;
+      const error = document.getElementById("adminLoginError");
+      if (attempt === ADMIN_PASSWORD) {
+        closeAdminLoginModal();
+        isAdmin = true;
+        document.getElementById("adminBadge").classList.replace("hidden", "flex");
+        ["addMemberBtn", "addRewardBtn", "archiveToggleBtn"].forEach(id => {
+          document.getElementById(id).classList.replace("hidden", "flex");
         });
-        if (!confirmed) return;
+        document.getElementById("adminBtn").innerHTML = `<i data-lucide="log-out" class="w-4 h-4"></i> Exit Admin`;
+        renderAll();
+        lucide.createIcons();
+      } else {
+        error.classList.remove("hidden");
+        document.getElementById("adminPasswordInput").classList.add("border-red-400", "ring-2", "ring-red-200");
+        setTimeout(() => {
+          document.getElementById("adminPasswordInput").classList.remove("border-red-400", "ring-2", "ring-red-200");
+        }, 1500);
+      }
+    };
+
+    window.closeAdminLoginModal = () => {
+      document.getElementById("adminLoginModal").classList.remove("open");
+    };
+
+    window.togglePasswordVisibility = () => {
+      const input = document.getElementById("adminPasswordInput");
+      const icon = document.getElementById("eyeIcon");
+      if (input.type === "password") {
+        input.type = "text";
+        icon.setAttribute("data-lucide", "eye-off");
+      } else {
+        input.type = "password";
+        icon.setAttribute("data-lucide", "eye");
+      }
+      lucide.createIcons();
+    };
+
+    // ── Show / Hide Archived ──────────────────────────────────────────────────
+    window.toggleShowArchived = () => {
+      showArchived = !showArchived;
+      document.getElementById("archiveToggleLabel").innerText = showArchived ? "Hide Archived" : "Show Archived";
+      renderAll();
+    };
+
+    // ── People Management ─────────────────────────────────────────────────────
+    window.addTeamMember = async () => {
+      const name = await showPromptModal({
+        title: 'Add Team Member',
+        subtitle: 'Enter the new member\'s name',
+        placeholder: 'e.g. Alex',
+        validate: v => v.trim() ? null : 'Name cannot be empty.'
+      });
+      if (!name || !name.trim()) return;
+      const newUser = { name: name.trim(), points: 0, archived: false };
+
+      if (isCloudEnabled) {
+        showSyncing('Adding member...');
+        await addDoc(collection(db, 'rewards_users'), newUser);
+      } else {
+        newUser.id = 'local-' + Date.now();
+        teamMembers.push(newUser);
+        saveLocalData();
+        renderAll();
+      }
+      showToast(`${name.trim()} added to the leaderboard!`);
+    };
+
+    window.archiveMember = async (id, name, currentlyArchived) => {
+      const action = currentlyArchived ? 'restore' : 'archive';
+      const confirmed = await showConfirm({
+        title: `${currentlyArchived ? 'Restore' : 'Archive'} ${name}?`,
+        message: currentlyArchived
+          ? `${name} will be visible on the leaderboard again.`
+          : `${name} will be hidden from the leaderboard but their data is kept.`,
+        okLabel: currentlyArchived ? 'Restore' : 'Archive',
+        icon: currentlyArchived ? 'archive-restore' : 'archive',
+        danger: false
+      });
+      if (!confirmed) return;
+
+      if (isCloudEnabled) {
+        showSyncing(currentlyArchived ? 'Restoring member...' : 'Archiving member...');
+        await updateDoc(doc(db, 'rewards_users', id), { archived: !currentlyArchived });
+      } else {
+        const user = teamMembers.find(m => m.id === id);
+        if (user) { user.archived = !currentlyArchived; saveLocalData(); renderAll(); }
+      }
+      showToast(`${name} ${currentlyArchived ? 'restored' : 'archived'}.`, 'info');
+    };
+
+    window.modifyPoints = async (id, currentPoints) => {
+      const member = teamMembers.find(m => m.id === id);
+      const input = await showPromptModal({
+        title: 'Adjust Points',
+        subtitle: `Current balance: ${currentPoints} pts${member ? ' — ' + member.name : ''}`,
+        placeholder: 'e.g. 50 or -25',
+        inputType: 'number',
+        validate: v => (!v || isNaN(v)) ? 'Please enter a valid number.' : null
+      });
+      if (input === null || isNaN(input)) return;
+      const finalPoints = Math.max(0, currentPoints + parseInt(input));
+
+      if (isCloudEnabled) {
+        showSyncing('Updating points...');
+        await updateDoc(doc(db, 'rewards_users', id), { points: finalPoints });
+      } else {
+        const user = teamMembers.find(m => m.id === id);
+        if (user) { user.points = finalPoints; saveLocalData(); renderAll(); }
+      }
+      const diff = parseInt(input);
+      showToast(`Points ${diff >= 0 ? '+' + diff : diff} applied. New balance: ${finalPoints}.`, diff >= 0 ? 'success' : 'info');
+    };
+
+    window.removeUser = async (id, name) => {
+      const confirmed = await showConfirm({
+        title: `Delete ${name}?`,
+        message: 'This will permanently remove them from the tracker. This cannot be undone.',
+        okLabel: 'Delete Permanently',
+        danger: true,
+        icon: 'trash-2'
+      });
+      if (!confirmed) return;
+      if (isCloudEnabled) {
+        showSyncing('Removing member...');
+        await deleteDoc(doc(db, 'rewards_users', id));
+      } else {
+        teamMembers = teamMembers.filter(m => m.id !== id);
+        saveLocalData();
+        renderAll();
+      }
+      showToast(`${name} removed.`, 'error');
+    };
+
+    // ── Rewards Management ────────────────────────────────────────────────────
+    window.openAddRewardModal = () => {
+      document.getElementById("rewardModalTitle").innerText = "Add Reward";
+      document.getElementById("rewardEditId").value = "";
+      ["rewardTitleInput", "rewardDescInput", "rewardCostInput", "rewardIconInput"].forEach(id => {
+        document.getElementById(id).value = "";
+      });
+      document.getElementById("rewardModal").classList.add("open");
+      lucide.createIcons();
+    };
+
+    window.openEditRewardModal = (id) => {
+      const reward = rewardsCatalog.find(r => r.id === id);
+      if (!reward) return;
+      document.getElementById("rewardModalTitle").innerText = "Edit Reward";
+      document.getElementById("rewardEditId").value = id;
+      document.getElementById("rewardTitleInput").value = reward.title;
+      document.getElementById("rewardDescInput").value = reward.desc;
+      document.getElementById("rewardCostInput").value = reward.cost;
+      document.getElementById("rewardIconInput").value = reward.icon;
+      document.getElementById("rewardModal").classList.add("open");
+      lucide.createIcons();
+    };
+
+    window.closeRewardModal = () => {
+      document.getElementById("rewardModal").classList.remove("open");
+    };
+
+    window.saveReward = async () => {
+      const title = document.getElementById("rewardTitleInput").value.trim();
+      const desc = document.getElementById("rewardDescInput").value.trim();
+      const cost = parseInt(document.getElementById("rewardCostInput").value);
+      const icon = document.getElementById("rewardIconInput").value.trim() || "gift";
+      const editId = document.getElementById("rewardEditId").value;
+
+      if (!title || isNaN(cost) || cost < 1) {
+        showToast('Please fill in a valid title and point cost.', 'error');
+        return;
+      }
+
+      const data = { title, desc, cost, icon, archived: false };
+
+      if (editId) {
         if (isCloudEnabled) {
-          showSyncing('Deleting reward...');
-          await deleteDoc(doc(db, 'rewards_catalog', id));
+          showSyncing("Saving reward...");
+          await updateDoc(doc(db, "rewards_catalog", editId), { title, desc, cost, icon });
         } else {
-          rewardsCatalog = rewardsCatalog.filter(r => r.id !== id);
+          const r = rewardsCatalog.find(r => r.id === editId);
+          if (r) { Object.assign(r, { title, desc, cost, icon }); saveLocalData(); renderRewardsCatalog(); }
+        }
+      } else {
+        if (isCloudEnabled) {
+          showSyncing("Adding reward...");
+          await addDoc(collection(db, "rewards_catalog"), data);
+        } else {
+          data.id = "reward-" + Date.now();
+          rewardsCatalog.push(data);
           saveLocalData();
           renderRewardsCatalog();
         }
-        showToast(`"${title}" deleted.`, 'error');
-      };
+      }
+      closeRewardModal();
+    };
 
-      // ── Cash Out Modal ────────────────────────────────────────────────────────
-      window.openCashOutModal = (id) => {
-        activeUserId = id;
-        const user = teamMembers.find(m => m.id === id);
-        if (!user) return;
+    window.archiveReward = async (id, currentlyArchived) => {
+      const action = currentlyArchived ? "restore" : "archive";
+      if (isCloudEnabled) {
+        showSyncing(currentlyArchived ? "Restoring reward..." : "Archiving reward...");
+        await updateDoc(doc(db, "rewards_catalog", id), { archived: !currentlyArchived });
+      } else {
+        const r = rewardsCatalog.find(r => r.id === id);
+        if (r) { r.archived = !currentlyArchived; saveLocalData(); renderRewardsCatalog(); }
+      }
+    };
 
-        document.getElementById("modalUserSub").innerText = `${user.name} has ${user.points} available points`;
+    window.deleteReward = async (id, title) => {
+      const confirmed = await showConfirm({
+        title: `Delete "${title}"?`,
+        message: 'This reward will be permanently removed and cannot be undone.',
+        okLabel: 'Delete Reward',
+        danger: true,
+        icon: 'trash-2'
+      });
+      if (!confirmed) return;
+      if (isCloudEnabled) {
+        showSyncing('Deleting reward...');
+        await deleteDoc(doc(db, 'rewards_catalog', id));
+      } else {
+        rewardsCatalog = rewardsCatalog.filter(r => r.id !== id);
+        saveLocalData();
+        renderRewardsCatalog();
+      }
+      showToast(`"${title}" deleted.`, 'error');
+    };
 
-        const activeRewards = rewardsCatalog.filter(r => !r.archived);
-        const listContainer = document.getElementById("modalRewardsList");
-        listContainer.innerHTML = activeRewards.length === 0
-          ? `<p class="text-slate-400 text-sm text-center py-8">No active rewards available.</p>`
-          : activeRewards.map(reward => {
-            const canAfford = user.points >= reward.cost;
-            return `
+    // ── Cash Out Modal ────────────────────────────────────────────────────────
+    window.openCashOutModal = (id) => {
+      activeUserId = id;
+      const user = teamMembers.find(m => m.id === id);
+      if (!user) return;
+
+      document.getElementById("modalUserSub").innerText = `${user.name} has ${user.points} available points`;
+
+      const activeRewards = rewardsCatalog.filter(r => !r.archived);
+      const listContainer = document.getElementById("modalRewardsList");
+      listContainer.innerHTML = activeRewards.length === 0
+        ? `<p class="text-slate-400 text-sm text-center py-8">No active rewards available.</p>`
+        : activeRewards.map(reward => {
+          const canAfford = user.points >= reward.cost;
+          return `
               <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between gap-4">
                 <div class="flex items-center gap-3">
                   <div class="p-2 bg-white border border-slate-200 rounded-lg text-slate-700">
@@ -771,63 +780,71 @@
                 </button>
               </div>
             `;
-          }).join("");
+        }).join("");
 
-        document.getElementById("cashOutModal").classList.add("open");
-        lucide.createIcons();
-      };
+      document.getElementById("cashOutModal").classList.add("open");
+      lucide.createIcons();
+    };
 
-      window.closeCashOutModal = () => {
-        document.getElementById("cashOutModal").classList.remove("open");
-        activeUserId = null;
-      };
+    window.closeCashOutModal = () => {
+      document.getElementById("cashOutModal").classList.remove("open");
+      activeUserId = null;
+    };
 
-      window.executeRedemption = async (rewardId, cost, rewardTitle) => {
-        const user = teamMembers.find(m => m.id === activeUserId);
-        if (!user || user.points < cost) return;
+    window.executeRedemption = async (rewardId, cost, rewardTitle) => {
+      const user = teamMembers.find(m => m.id === activeUserId);
+      if (!user || user.points < cost) return;
 
-        const confirmed = await showConfirm({
-          title: `Redeem "${rewardTitle}"?`,
-          message: `This will deduct ${cost} points from ${user.name}'s balance (${user.points} → ${user.points - cost} pts).`,
-          okLabel: 'Confirm Redemption',
-          danger: false,
-          icon: 'shopping-bag'
-        });
-        if (!confirmed) return;
+      const confirmed = await showConfirm({
+        title: `Redeem "${rewardTitle}"?`,
+        message: `This will deduct ${cost} points from ${user.name}'s balance (${user.points} → ${user.points - cost} pts).`,
+        okLabel: 'Confirm Redemption',
+        danger: false,
+        icon: 'shopping-bag'
+      });
+      if (!confirmed) return;
 
-        const remaining = user.points - cost;
-        if (isCloudEnabled) {
-          showSyncing('Completing redemption...');
-          await updateDoc(doc(db, 'rewards_users', activeUserId), { points: remaining });
-        } else {
-          user.points = remaining;
-          saveLocalData();
-          renderAll();
-        }
-
-        closeCashOutModal();
-        showToast(`"${rewardTitle}" redeemed for ${user.name}!`);
-      };
-
-      // ── Render Functions ──────────────────────────────────────────────────────
-      function renderAll() {
-        renderLeaderboard();
-        renderRewardsCatalog();
-        if (activeUserId) window.openCashOutModal(activeUserId);
+      const remaining = user.points - cost;
+      if (isCloudEnabled) {
+        showSyncing('Completing redemption...');
+        await updateDoc(doc(db, 'rewards_users', activeUserId), { points: remaining });
+      } else {
+        user.points = remaining;
+        saveLocalData();
+        renderAll();
       }
 
-      function renderRewardsCatalog() {
-        const container = document.getElementById("rewardsCatalog");
-        const visibleRewards = showArchived
-          ? rewardsCatalog
-          : rewardsCatalog.filter(r => !r.archived);
+      closeCashOutModal();
+      showToast(`"${rewardTitle}" redeemed for ${user.name}!`);
+    };
 
-        if (visibleRewards.length === 0) {
-          container.innerHTML = `<p class="text-slate-400 text-sm text-center py-6">No rewards available.</p>`;
-          return;
+    // ── Render Functions ──────────────────────────────────────────────────────
+    function renderAll() {
+      renderLeaderboard();
+      renderRewardsCatalog();
+      if (activeUserId) {
+        const stillExists = teamMembers.some(m => m.id === activeUserId);
+        if (stillExists) {
+          const user = teamMembers.find(m => m.id === activeUserId);
+          document.getElementById("modalUserSub").innerText = `${user.name} has ${user.points} available points`;
+        } else {
+          closeCashOutModal();
         }
+      }
+    }
 
-        container.innerHTML = visibleRewards.map(reward => `
+    function renderRewardsCatalog() {
+      const container = document.getElementById("rewardsCatalog");
+      const visibleRewards = showArchived
+        ? rewardsCatalog
+        : rewardsCatalog.filter(r => !r.archived);
+
+      if (visibleRewards.length === 0) {
+        container.innerHTML = `<p class="text-slate-400 text-sm text-center py-6">No rewards available.</p>`;
+        return;
+      }
+
+      container.innerHTML = visibleRewards.map(reward => `
           <div class="bg-white p-4 rounded-xl border ${reward.archived ? 'border-dashed border-slate-300 opacity-60' : 'border-slate-200'} shadow-sm flex items-start gap-4">
             <div class="p-2.5 ${reward.archived ? 'bg-slate-50 text-slate-400' : 'bg-blue-50 text-blue-600 border border-blue-100'} rounded-lg mt-0.5">
               <i data-lucide="${reward.icon}" class="w-5 h-5"></i>
@@ -851,41 +868,38 @@
             </div>
           </div>
         `).join("");
-        lucide.createIcons();
+      lucide.createIcons();
+    }
+
+    function renderLeaderboard() {
+      const grid = document.getElementById("leaderboardList");
+
+      const visible = showArchived
+        ? teamMembers
+        : teamMembers.filter(m => !m.archived);
+
+      if (visible.length === 0) {
+        grid.innerHTML = `<div class="py-20 text-center text-slate-400 bg-white border border-slate-200 rounded-2xl">No users on the leaderboard yet.</div>`;
+        return;
       }
 
-      function renderLeaderboard() {
-        const grid = document.getElementById("leaderboardList");
+      const sorted = [...visible].sort((a, b) => {
+        if (a.archived !== b.archived) return a.archived ? 1 : -1;
+        return b.points - a.points;
+      });
 
-        const visible = showArchived
-          ? teamMembers
-          : teamMembers.filter(m => !m.archived);
+      grid.innerHTML = sorted.map((member, index) => {
+        const rankPosition = index + 1;
+        const isArchivedMember = !!member.archived;
 
-        if (visible.length === 0) {
-          grid.innerHTML = `<div class="py-20 text-center text-slate-400 bg-white border border-slate-200 rounded-2xl">No users on the leaderboard yet.</div>`;
-          return;
+        let rankBadge = `<span class="text-sm font-bold text-slate-400 w-6 text-center">${isArchivedMember ? '—' : '#' + rankPosition}</span>`;
+        if (!isArchivedMember) {
+          if (rankPosition === 1) rankBadge = `<div class="bg-amber-100 border border-amber-300 text-amber-700 w-7 h-7 flex items-center justify-center rounded-full text-xs font-black shadow-sm">👑</div>`;
+          if (rankPosition === 2) rankBadge = `<div class="bg-slate-200 border border-slate-300 text-slate-700 w-7 h-7 flex items-center justify-center rounded-full text-xs font-black shadow-sm">🥈</div>`;
+          if (rankPosition === 3) rankBadge = `<div class="bg-orange-100 border border-orange-200 text-orange-700 w-7 h-7 flex items-center justify-center rounded-full text-xs font-black shadow-sm">🥉</div>`;
         }
 
-        // Sort: active first then archived, within each group sort by points
-        const sorted = [...visible].sort((a, b) => {
-          if (a.archived !== b.archived) return a.archived ? 1 : -1;
-          return b.points - a.points;
-        });
-
-        const activeCount = sorted.filter(m => !m.archived).length;
-
-        grid.innerHTML = sorted.map((member, index) => {
-          const rankPosition = index + 1;
-          const isArchivedMember = !!member.archived;
-
-          let rankBadge = `<span class="text-sm font-bold text-slate-400 w-6 text-center">${isArchivedMember ? '—' : '#' + rankPosition}</span>`;
-          if (!isArchivedMember) {
-            if (rankPosition === 1) rankBadge = `<div class="bg-amber-100 border border-amber-300 text-amber-700 w-7 h-7 flex items-center justify-center rounded-full text-xs font-black shadow-sm">👑</div>`;
-            if (rankPosition === 2) rankBadge = `<div class="bg-slate-200 border border-slate-300 text-slate-700 w-7 h-7 flex items-center justify-center rounded-full text-xs font-black shadow-sm">🥈</div>`;
-            if (rankPosition === 3) rankBadge = `<div class="bg-orange-100 border border-orange-200 text-orange-700 w-7 h-7 flex items-center justify-center rounded-full text-xs font-black shadow-sm">🥉</div>`;
-          }
-
-          return `
+        return `
             <div class="bg-white p-4 rounded-xl border ${isArchivedMember ? 'border-dashed border-slate-300 opacity-60' : 'border-slate-200'} shadow-sm flex items-center justify-between gap-4 hover:border-slate-300 transition-all">
               <div class="flex items-center gap-4 flex-1 min-w-0">
                 ${rankBadge}
@@ -922,11 +936,14 @@
               </div>
             </div>
           `;
-        }).join("");
-        lucide.createIcons();
-      }
+      }).join("");
+      lucide.createIcons();
+    }
 
-      init();
-    </script>
-  </body>
+    // Initialize local data first to prevent race condition variables from clearing out state
+    loadLocalData();
+    init();
+  </script>
+</body>
+
 </html>

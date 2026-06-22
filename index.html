@@ -77,6 +77,10 @@
           class="hidden items-center gap-2 px-4 py-2 bg-blue-600 rounded-lg text-white hover:bg-blue-700 transition shadow-sm font-medium">
           <i data-lucide="user-plus" class="w-4 h-4"></i> Add Person
         </button>
+        <button id="addActionBtn" onclick="openAddActionModal()"
+          class="hidden items-center gap-2 px-4 py-2 bg-pink-600 rounded-lg text-white hover:bg-pink-700 transition shadow-sm font-medium">
+          <i data-lucide="zap" class="w-4 h-4"></i> Add Action
+        </button>
         <button id="addRewardBtn" onclick="openAddRewardModal()"
           class="hidden items-center gap-2 px-4 py-2 bg-violet-600 rounded-lg text-white hover:bg-violet-700 transition shadow-sm font-medium">
           <i data-lucide="gift" class="w-4 h-4"></i> Add Reward
@@ -257,6 +261,119 @@
     </div>
   </div>
 
+  <div id="actionModal"
+    class="modal-overlay fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl flex flex-col">
+      <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+        <h2 id="actionModalTitle" class="text-xl font-bold text-slate-800">Add Action</h2>
+        <button onclick="closeActionModal()" class="p-2 hover:bg-slate-100 rounded-full">
+          <i data-lucide="x" class="w-5 h-5 text-slate-400"></i>
+        </button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Action Title</label>
+          <input id="actionTitleInput" type="text" placeholder="e.g. Helped a Teammate"
+            class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-400" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Points Awarded</label>
+          <input id="actionPointsInput" type="number" min="1" placeholder="e.g. 50"
+            class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-400" />
+        </div>
+        <input type="hidden" id="actionEditId" value="" />
+        <div class="flex gap-3 pt-2">
+          <button onclick="closeActionModal()"
+            class="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-medium transition">Cancel</button>
+          <button onclick="saveAction()"
+            class="flex-1 px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 text-sm font-bold transition">Save
+            Action</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="assignPointsModal"
+    class="modal-overlay fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 items-center justify-center p-4">
+    <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl flex flex-col">
+      <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+        <div>
+          <h2 class="text-xl font-bold text-slate-800">Award Points</h2>
+          <p id="assignPointsSub" class="text-xs text-slate-500 mt-0.5"></p>
+        </div>
+        <button onclick="closeAssignPointsModal()" class="p-2 hover:bg-slate-100 rounded-full">
+          <i data-lucide="x" class="w-5 h-5 text-slate-400"></i>
+        </button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Predefined Action</label>
+          <select id="assignPointsSelect" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+            <option value="">-- Custom Amount --</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wide">Manual Amount (Optional)</label>
+          <input id="assignPointsManualInput" type="number" placeholder="e.g. 10 or -5"
+            class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+        </div>
+        <div class="flex gap-3 pt-2">
+          <button onclick="closeAssignPointsModal()"
+            class="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-medium transition">Cancel</button>
+          <button onclick="submitAssignPoints()"
+            class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-bold transition">Award</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="goalModal"
+    class="modal-overlay fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 items-center justify-center p-4">
+    <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl flex flex-col">
+      <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+        <div>
+          <h2 class="text-xl font-bold text-slate-800">Set Goal</h2>
+          <p id="goalModalSub" class="text-xs text-slate-500 mt-0.5">Select a reward as a target</p>
+        </div>
+        <button onclick="closeGoalModal()" class="p-2 hover:bg-slate-100 rounded-full">
+          <i data-lucide="x" class="w-5 h-5 text-slate-400"></i>
+        </button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div id="goalRewardsList" class="space-y-2 max-h-[40vh] overflow-y-auto custom-scrollbar"></div>
+        <div class="flex gap-3 pt-2">
+          <button onclick="submitGoal(null)"
+            class="flex-1 px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 text-sm font-medium transition">Clear Goal</button>
+          <button onclick="closeGoalModal()"
+            class="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 text-sm font-medium transition">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="historyModal"
+    class="modal-overlay fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 items-center justify-center p-4">
+    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl flex flex-col max-h-[80vh]">
+      <div class="p-6 border-b border-slate-100 flex justify-between items-center shrink-0">
+        <div>
+          <h2 class="text-xl font-bold text-slate-800">Activity History</h2>
+          <p id="historyModalSub" class="text-xs text-slate-500 mt-0.5"></p>
+        </div>
+        <button onclick="closeHistoryModal()" class="p-2 hover:bg-slate-100 rounded-full">
+          <i data-lucide="x" class="w-5 h-5 text-slate-400"></i>
+        </button>
+      </div>
+      <div class="flex border-b border-slate-100 shrink-0">
+        <button id="tabPointsBtn" onclick="switchHistoryTab('points')" class="flex-1 py-3 text-sm font-bold text-blue-600 border-b-2 border-blue-600">Points Earned</button>
+        <button id="tabRewardsBtn" onclick="switchHistoryTab('rewards')" class="flex-1 py-3 text-sm font-bold text-slate-500 border-b-2 border-transparent hover:text-slate-700">Rewards Redeemed</button>
+      </div>
+      <div class="p-6 overflow-y-auto custom-scrollbar flex-1">
+        <div id="historyPointsList" class="space-y-3"></div>
+        <div id="historyRewardsList" class="space-y-3 hidden"></div>
+      </div>
+    </div>
+  </div>
+
   <div id="toast"
     class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] transition-all duration-300 opacity-0 translate-y-4 pointer-events-none">
     <div id="toastInner"
@@ -282,6 +399,7 @@
 
     const LOCAL_STORAGE_KEY = "company_rewards_backup";
     const LOCAL_REWARDS_KEY = "company_rewards_catalog";
+    const LOCAL_ACTIONS_KEY = "company_actions_catalog";
     const ADMIN_PASSWORD = "squidward123";
 
     let isCloudEnabled = false;
@@ -291,6 +409,7 @@
 
     let teamMembers = [];
     let rewardsCatalog = [];
+    let actionsCatalog = [];
     let activeUserId = null;
 
     // ── Modal Helpers ─────────────────────────────────────────────────────────
@@ -387,6 +506,11 @@
       { id: "r5", title: "Paid Day Off", cost: 1000, icon: "calendar-days", desc: "An extra mental health day to completely unplug.", archived: false }
     ];
 
+    const DEFAULT_ACTIONS = [
+      { id: "a1", title: "Helped a teammate", points: 25, archived: false },
+      { id: "a2", title: "Project milestone", points: 100, archived: false }
+    ];
+
     // ── Sync indicator ────────────────────────────────────────────────────────
     function showSyncing(text = "Syncing...") {
       const el = document.getElementById("syncStatus");
@@ -400,14 +524,18 @@
     // ── Local Storage Fallback ────────────────────────────────────────────────
     window.loadLocalData = () => {
       const savedMembers = localStorage.getItem(LOCAL_STORAGE_KEY);
-      teamMembers = savedMembers ? JSON.parse(savedMembers) : [
+      const parsedMembers = savedMembers ? JSON.parse(savedMembers) : [
         { id: "l1", name: "Ken", points: 150, archived: false },
         { id: "l2", name: "Tal", points: 300, archived: false },
         { id: "l3", name: "Ryan", points: 75, archived: false }
       ];
+      teamMembers = parsedMembers.map(m => ({ pointsHistory: [], rewardsHistory: [], currentGoal: null, ...m }));
 
       const savedRewards = localStorage.getItem(LOCAL_REWARDS_KEY);
       rewardsCatalog = savedRewards ? JSON.parse(savedRewards) : DEFAULT_REWARDS.map(r => ({ ...r }));
+
+      const savedActions = localStorage.getItem(LOCAL_ACTIONS_KEY);
+      actionsCatalog = savedActions ? JSON.parse(savedActions) : DEFAULT_ACTIONS.map(a => ({ ...a }));
 
       renderAll();
     };
@@ -416,6 +544,7 @@
       if (isCloudEnabled) return;
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(teamMembers));
       localStorage.setItem(LOCAL_REWARDS_KEY, JSON.stringify(rewardsCatalog));
+      localStorage.setItem(LOCAL_ACTIONS_KEY, JSON.stringify(actionsCatalog));
       showSyncing("Saved locally");
     }
 
@@ -498,7 +627,7 @@
       if (isAdmin) {
         isAdmin = false;
         document.getElementById("adminBadge").classList.replace("flex", "hidden");
-        ["addMemberBtn", "addRewardBtn", "archiveToggleBtn"].forEach(id => {
+        ["addMemberBtn", "addRewardBtn", "addActionBtn", "archiveToggleBtn"].forEach(id => {
           document.getElementById(id).classList.replace("flex", "hidden");
         });
         document.getElementById("adminBtn").innerHTML = `<i data-lucide="lock" class="w-4 h-4"></i> Admin Login`;
@@ -523,7 +652,7 @@
         closeAdminLoginModal();
         isAdmin = true;
         document.getElementById("adminBadge").classList.replace("hidden", "flex");
-        ["addMemberBtn", "addRewardBtn", "archiveToggleBtn"].forEach(id => {
+        ["addMemberBtn", "addRewardBtn", "addActionBtn", "archiveToggleBtn"].forEach(id => {
           document.getElementById(id).classList.replace("hidden", "flex");
         });
         document.getElementById("adminBtn").innerHTML = `<i data-lucide="log-out" class="w-4 h-4"></i> Exit Admin`;
@@ -608,27 +737,57 @@
       showToast(`${name} ${currentlyArchived ? 'restored' : 'archived'}.`, 'info');
     };
 
-    window.modifyPoints = async (id, currentPoints) => {
+    window.openAssignPointsModal = (id) => {
+      activeUserId = id;
       const member = teamMembers.find(m => m.id === id);
-      const input = await showPromptModal({
-        title: 'Adjust Points',
-        subtitle: `Current balance: ${currentPoints} pts${member ? ' — ' + member.name : ''}`,
-        placeholder: 'e.g. 50 or -25',
-        inputType: 'number',
-        validate: v => (!v || isNaN(v)) ? 'Please enter a valid number.' : null
-      });
-      if (input === null || isNaN(input)) return;
-      const finalPoints = Math.max(0, currentPoints + parseInt(input));
+      if (!member) return;
+      document.getElementById("assignPointsSub").innerText = `Current balance: ${member.points} pts — ${member.name}`;
+      const select = document.getElementById("assignPointsSelect");
+      const activeActions = actionsCatalog.filter(a => !a.archived);
+      select.innerHTML = '<option value="">-- Custom Amount --</option>' + activeActions.map(a => `<option value="${a.id}">${a.title} (+${a.points} pts)</option>`).join("");
+      document.getElementById("assignPointsManualInput").value = "";
+      document.getElementById("assignPointsModal").classList.add("open");
+    };
+
+    window.closeAssignPointsModal = () => {
+      document.getElementById("assignPointsModal").classList.remove("open");
+      activeUserId = null;
+    };
+
+    window.submitAssignPoints = async () => {
+      const member = teamMembers.find(m => m.id === activeUserId);
+      if (!member) return;
+      const select = document.getElementById("assignPointsSelect");
+      const manual = document.getElementById("assignPointsManualInput").value;
+      let pointsToAdd = 0;
+      let actionDesc = "Manual Adjustment";
+      if (select.value) {
+        const action = actionsCatalog.find(a => a.id === select.value);
+        if (action) {
+          pointsToAdd = action.points;
+          actionDesc = action.title;
+        }
+      } else if (manual && !isNaN(manual)) {
+        pointsToAdd = parseInt(manual);
+      } else {
+        return showToast("Please select an action or enter an amount.", "error");
+      }
+      
+      const finalPoints = Math.max(0, member.points + pointsToAdd);
+      const historyEntry = { date: Date.now(), actionName: actionDesc, amount: pointsToAdd };
+      const newHistory = [...(member.pointsHistory || []), historyEntry];
 
       if (isCloudEnabled) {
         showSyncing('Updating points...');
-        await updateDoc(doc(db, 'rewards_users', id), { points: finalPoints });
+        await updateDoc(doc(db, 'rewards_users', member.id), { points: finalPoints, pointsHistory: newHistory });
       } else {
-        const user = teamMembers.find(m => m.id === id);
-        if (user) { user.points = finalPoints; saveLocalData(); renderAll(); }
+        member.points = finalPoints;
+        member.pointsHistory = newHistory;
+        saveLocalData();
+        renderAll();
       }
-      const diff = parseInt(input);
-      showToast(`Points ${diff >= 0 ? '+' + diff : diff} applied. New balance: ${finalPoints}.`, diff >= 0 ? 'success' : 'info');
+      closeAssignPointsModal();
+      showToast(`Points applied. New balance: ${finalPoints}.`, 'success');
     };
 
     window.removeUser = async (id, name) => {
@@ -805,11 +964,14 @@
       if (!confirmed) return;
 
       const remaining = user.points - cost;
+      const historyEntry = { date: Date.now(), rewardTitle: rewardTitle, cost: cost };
+      const newHistory = [...(user.rewardsHistory || []), historyEntry];
       if (isCloudEnabled) {
         showSyncing('Completing redemption...');
-        await updateDoc(doc(db, 'rewards_users', activeUserId), { points: remaining });
+        await updateDoc(doc(db, 'rewards_users', activeUserId), { points: remaining, rewardsHistory: newHistory });
       } else {
         user.points = remaining;
+        user.rewardsHistory = newHistory;
         saveLocalData();
         renderAll();
       }
@@ -904,18 +1066,42 @@
               <div class="flex items-center gap-4 flex-1 min-w-0">
                 ${rankBadge}
                 <div class="min-w-0">
-                  <h3 class="font-bold text-base ${isArchivedMember ? 'text-slate-400' : 'text-slate-800'} truncate">${member.name} ${isArchivedMember ? '<span class="text-[10px] font-semibold bg-slate-100 text-slate-400 px-1.5 py-0.5 rounded ml-1">Archived</span>' : ''}</h3>
-                  <p class="text-xs font-bold ${isArchivedMember ? 'text-slate-400' : 'text-blue-600'} flex items-center gap-1 mt-0.5">
+                  <div class="flex items-center gap-2">
+                    <h3 class="font-bold text-base ${isArchivedMember ? 'text-slate-400' : 'text-slate-800'} truncate">${member.name} ${isArchivedMember ? '<span class="text-[10px] font-semibold bg-slate-100 text-slate-400 px-1.5 py-0.5 rounded ml-1">Archived</span>' : ''}</h3>
+                    <button onclick="openHistoryModal('${member.id}')" class="text-slate-400 hover:text-blue-600 transition" title="View History"><i data-lucide="clock" class="w-3.5 h-3.5"></i></button>
+                  </div>
+                  <p class="text-xs font-bold ${isArchivedMember ? 'text-slate-400' : 'text-blue-600'} flex items-center gap-1 mt-0.5 mb-1">
                     <span class="inline-block w-1.5 h-1.5 ${isArchivedMember ? 'bg-slate-400' : 'bg-blue-500'} rounded-full"></span>
                     ${member.points} Balance Points
                   </p>
+                  ${(!isArchivedMember && member.currentGoal) ? (() => {
+                    const goalReward = rewardsCatalog.find(r => r.id === member.currentGoal);
+                    if(!goalReward) return '';
+                    const pct = Math.min(100, Math.round((member.points / goalReward.cost) * 100));
+                    return \`
+                      <div class="w-full max-w-[200px] mt-1.5">
+                        <div class="flex justify-between text-[10px] font-bold text-slate-500 mb-1">
+                          <span class="truncate pr-2">Goal: \${goalReward.title}</span>
+                          <span>\${pct}%</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-1.5">
+                          <div class="bg-blue-500 h-1.5 rounded-full transition-all duration-500" style="width: \${pct}%"></div>
+                        </div>
+                      </div>
+                    \`;
+                  })() : ''}
                 </div>
               </div>
 
               <div class="flex items-center gap-1">
+                ${!isArchivedMember ? `
+                  <button onclick="openGoalModal('${member.id}')" class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Set Goal">
+                    <i data-lucide="target" class="w-4 h-4"></i>
+                  </button>
+                ` : ''}
                 ${isAdmin ? `
                   ${!isArchivedMember ? `
-                    <button onclick="modifyPoints('${member.id}', ${member.points})" class="p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-50 border border-transparent hover:border-slate-100 rounded-lg transition" title="Adjust Points">
+                    <button onclick="openAssignPointsModal('${member.id}')" class="p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-50 border border-transparent hover:border-slate-100 rounded-lg transition" title="Adjust Points">
                       <i data-lucide="plus-minus" class="w-4 h-4"></i>
                     </button>
                     <button onclick="openCashOutModal('${member.id}')" class="flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 text-xs font-bold rounded-lg transition" title="Redeem Prize">
@@ -939,6 +1125,166 @@
       }).join("");
       lucide.createIcons();
     }
+
+    // ── Predefined Actions ────────────────────────────────────────────────────
+    window.openAddActionModal = () => {
+      document.getElementById("actionModalTitle").innerText = "Add Action";
+      document.getElementById("actionEditId").value = "";
+      document.getElementById("actionTitleInput").value = "";
+      document.getElementById("actionPointsInput").value = "";
+      document.getElementById("actionModal").classList.add("open");
+      lucide.createIcons();
+    };
+
+    window.closeActionModal = () => {
+      document.getElementById("actionModal").classList.remove("open");
+    };
+
+    window.saveAction = async () => {
+      const title = document.getElementById("actionTitleInput").value.trim();
+      const points = parseInt(document.getElementById("actionPointsInput").value);
+      const editId = document.getElementById("actionEditId").value;
+
+      if (!title || isNaN(points)) {
+        showToast('Please fill in a valid title and points.', 'error');
+        return;
+      }
+      const data = { title, points, archived: false };
+
+      if (editId) {
+        if (isCloudEnabled) {
+          showSyncing("Saving action...");
+          await updateDoc(doc(db, "rewards_actions", editId), { title, points });
+        } else {
+          const a = actionsCatalog.find(a => a.id === editId);
+          if (a) { Object.assign(a, { title, points }); saveLocalData(); }
+        }
+      } else {
+        if (isCloudEnabled) {
+          showSyncing("Adding action...");
+          await addDoc(collection(db, "rewards_actions"), data);
+        } else {
+          data.id = "action-" + Date.now();
+          actionsCatalog.push(data);
+          saveLocalData();
+        }
+      }
+      closeActionModal();
+      showToast("Action saved successfully.", "success");
+    };
+
+    // ── Goals ─────────────────────────────────────────────────────────────────
+    window.openGoalModal = (id) => {
+      activeUserId = id;
+      const user = teamMembers.find(m => m.id === id);
+      if (!user) return;
+      const activeRewards = rewardsCatalog.filter(r => !r.archived);
+      const listContainer = document.getElementById("goalRewardsList");
+      listContainer.innerHTML = activeRewards.length === 0
+        ? `<p class="text-slate-400 text-sm text-center py-8">No active rewards available.</p>`
+        : activeRewards.map(reward => {
+          return \`
+              <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                  <div class="p-2 bg-white border border-slate-200 rounded-lg text-slate-700">
+                    <i data-lucide="\${reward.icon}" class="w-4 h-4"></i>
+                  </div>
+                  <div>
+                    <p class="text-sm font-bold text-slate-800">\${reward.title}</p>
+                    <p class="text-[11px] text-slate-400 font-medium">\${reward.cost} Points</p>
+                  </div>
+                </div>
+                <button
+                  onclick="submitGoal('\${reward.id}')"
+                  class="px-3 py-1.5 text-xs font-bold rounded-lg transition bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
+                >
+                  Select
+                </button>
+              </div>
+            \`;
+        }).join("");
+      document.getElementById("goalModal").classList.add("open");
+      lucide.createIcons();
+    };
+
+    window.closeGoalModal = () => {
+      document.getElementById("goalModal").classList.remove("open");
+      activeUserId = null;
+    };
+
+    window.submitGoal = async (rewardId) => {
+      const user = teamMembers.find(m => m.id === activeUserId);
+      if (!user) return;
+      
+      if (isCloudEnabled) {
+        showSyncing('Updating goal...');
+        await updateDoc(doc(db, 'rewards_users', activeUserId), { currentGoal: rewardId });
+      } else {
+        user.currentGoal = rewardId;
+        saveLocalData();
+        renderAll();
+      }
+      closeGoalModal();
+      showToast(rewardId ? "Goal assigned." : "Goal cleared.", 'success');
+    };
+
+    // ── History ───────────────────────────────────────────────────────────────
+    window.openHistoryModal = (id) => {
+      const user = teamMembers.find(m => m.id === id);
+      if (!user) return;
+      document.getElementById("historyModalSub").innerText = user.name;
+      
+      const ptsList = document.getElementById("historyPointsList");
+      const pts = user.pointsHistory || [];
+      if (pts.length === 0) ptsList.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">No points history.</p>';
+      else ptsList.innerHTML = pts.slice().reverse().map(h => \`
+        <div class="flex justify-between items-center bg-slate-50 p-3 rounded-lg border border-slate-100">
+          <div>
+            <p class="text-sm font-bold text-slate-800">\${h.actionName}</p>
+            <p class="text-[10px] text-slate-400">\${new Date(h.date).toLocaleString()}</p>
+          </div>
+          <span class="text-sm font-black \${h.amount >= 0 ? 'text-emerald-600' : 'text-red-500'}">\${h.amount >= 0 ? '+' : ''}\${h.amount}</span>
+        </div>
+      \`).join("");
+
+      const rewList = document.getElementById("historyRewardsList");
+      const rews = user.rewardsHistory || [];
+      if (rews.length === 0) rewList.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">No rewards history.</p>';
+      else rewList.innerHTML = rews.slice().reverse().map(h => \`
+        <div class="flex justify-between items-center bg-slate-50 p-3 rounded-lg border border-slate-100">
+          <div>
+            <p class="text-sm font-bold text-slate-800">\${h.rewardTitle}</p>
+            <p class="text-[10px] text-slate-400">\${new Date(h.date).toLocaleString()}</p>
+          </div>
+          <span class="text-sm font-black text-slate-500">-\${h.cost}</span>
+        </div>
+      \`).join("");
+
+      switchHistoryTab('points');
+      document.getElementById("historyModal").classList.add("open");
+    };
+
+    window.closeHistoryModal = () => {
+      document.getElementById("historyModal").classList.remove("open");
+    };
+
+    window.switchHistoryTab = (tab) => {
+      const pList = document.getElementById("historyPointsList");
+      const rList = document.getElementById("historyRewardsList");
+      const pBtn = document.getElementById("tabPointsBtn");
+      const rBtn = document.getElementById("tabRewardsBtn");
+      if (tab === 'points') {
+        pList.classList.remove("hidden");
+        rList.classList.add("hidden");
+        pBtn.className = "flex-1 py-3 text-sm font-bold text-blue-600 border-b-2 border-blue-600";
+        rBtn.className = "flex-1 py-3 text-sm font-bold text-slate-500 border-b-2 border-transparent hover:text-slate-700";
+      } else {
+        rList.classList.remove("hidden");
+        pList.classList.add("hidden");
+        rBtn.className = "flex-1 py-3 text-sm font-bold text-blue-600 border-b-2 border-blue-600";
+        pBtn.className = "flex-1 py-3 text-sm font-bold text-slate-500 border-b-2 border-transparent hover:text-slate-700";
+      }
+    };
 
     // Initialize local data first to prevent race condition variables from clearing out state
     loadLocalData();
